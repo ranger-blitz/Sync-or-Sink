@@ -1,15 +1,15 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { HomeView } from "../views";
+import { HomeView } from "../views/home";
 
 const Home: NextPage = (props) => {
   return (
     <div>
       <Head>
-        <title>Solana Scaffold</title>
+        <title>Sync or Sink</title>
         <meta
           name="description"
-          content="Solana Scaffold"
+          content="Sync or Sink Game"
         />
       </Head>
       <HomeView />

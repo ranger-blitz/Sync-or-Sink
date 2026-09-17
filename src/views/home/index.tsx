@@ -293,7 +293,7 @@ const GameSandbox: FC = () => {
       bgProps.current.forEach(p => p.y += (currentSpeed * 0.5 * p.speed) * deltaTime); bgProps.current = bgProps.current.filter(p => p.y < H + 50);
 
       [pLeft.current, pRight.current].forEach((p) => {
-        if (!p.holding && p.vy < 0) p.vy *= 0.85;
+        if (!p.holding && p.vy < 0) p.vy *= Math.pow(0.85, deltaTime);
         p.vy += GRAVITY * deltaTime; p.y += p.vy * deltaTime;
         if (p.flash > 0) p.flash -= deltaTime; if (p.jumpBuffer > 0) p.jumpBuffer -= deltaTime * 16; 
         
@@ -346,26 +346,66 @@ const GameSandbox: FC = () => {
         const isJumpingOver = !p.grounded && p.y < FLOOR - PLAYER_SIZE - 20;
 
         if (pHitX < obsHitX + obsHitW && pHitX + pHitW > obsHitX && pHitY < obsHitY + obsHitH && pHitY + pHitH > obsHitY) {
-          if (obs.type === 'ORB') { if (!p.grounded) return; shieldActive.current = true; shieldTimer.current = 300; spawnText(pX, p.y - 40, "SHIELD UP!", '#00BFFF'); obstacles.current.splice(i, 1); triggerEvent('level', pX, p.y, '#FFF'); pulse(50); return; }
-          if (obs.type === 'GHOST') { if (!p.grounded) return; ghostActive.current = true; ghostTimer.current = 480; spawnText(MID, 300, "👻 PHASE SHIFT!", '#d946ef'); obstacles.current.splice(i, 1); triggerEvent('level', pX, p.y, '#d946ef'); pulse(50); return; }
+          if (obs.type === 'ORB') { 
+            if (!p.grounded) return; 
+            obs.collided = true;
+            shieldActive.current = true; 
+            shieldTimer.current = 300; 
+            spawnText(pX, p.y - 40, "SHIELD UP!", '#00BFFF'); 
+            triggerEvent('level', pX, p.y, '#FFF'); 
+            pulse(50); 
+            return; 
+          }
+          if (obs.type === 'GHOST') { 
+            if (!p.grounded) return; 
+            obs.collided = true;
+            ghostActive.current = true; 
+            ghostTimer.current = 480; 
+            spawnText(MID, 300, "👻 PHASE SHIFT!", '#d946ef'); 
+            triggerEvent('level', pX, p.y, '#d946ef'); 
+            pulse(50); 
+            return; 
+          }
           if (obs.type === 'GLITCH') { 
-              if (!p.grounded) return; 
-              if (glitchActive.current) return; 
-              glitchActive.current = true; glitchTimer.current = 360; spawnText(MID, 300, "⚡ SURGE SPEED!", '#ff0000'); shakeRef.current = 20; triggerEvent('crash', pX, p.y, '#F00'); obstacles.current.splice(i, 1); pulse(150); return; 
+            if (!p.grounded) return; 
+            if (glitchActive.current) return; 
+            obs.collided = true;
+            glitchActive.current = true; 
+            glitchTimer.current = 360; 
+            spawnText(MID, 300, "⚡ SURGE SPEED!", '#ff0000'); 
+            shakeRef.current = 20; 
+            triggerEvent('crash', pX, p.y, '#F00'); 
+            pulse(150); 
+            return; 
           }
           else if (!isJumpingOver) {
             if (ghostActive.current) return; 
             obs.collided = true;
-            if (shieldActive.current) { shieldActive.current = false; spawnExplosion(pX, p.y, '#FFF', 20); spawnText(MID, 300, "SHIELD SAVED YOU", '#FFF'); obstacles.current.splice(i, 1); shakeRef.current = 10; triggerEvent('crash', pX, p.y, '#F00'); pulse(100); } 
+            if (shieldActive.current) { 
+              shieldActive.current = false; 
+              spawnExplosion(pX, p.y, '#FFF', 20); 
+              spawnText(MID, 300, "SHIELD SAVED YOU", '#FFF'); 
+              shakeRef.current = 10; 
+              triggerEvent('crash', pX, p.y, '#F00'); 
+              pulse(100); 
+            } 
             else if (p.flash <= 0) { 
-                shakeRef.current = 30; spawnExplosion(pX, p.y, activeEnv.accent, 30); triggerEvent('crash', pX, p.y, '#F00');
-                if (!GOD_MODE) { gameStateRef.current = 'GAMEOVER'; setGameState('GAMEOVER'); checkAchievements(scoreRef.current); pulse(400); if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } }
+              shakeRef.current = 30; 
+              spawnExplosion(pX, p.y, activeEnv.accent, 30); 
+              triggerEvent('crash', pX, p.y, '#F00');
+              if (!GOD_MODE) { 
+                gameStateRef.current = 'GAMEOVER'; 
+                setGameState('GAMEOVER'); 
+                checkAchievements(scoreRef.current); 
+                pulse(400); 
+                if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } 
+              }
             }
           }
         }
         if (!obs.passed && !obs.collided && obs.y > p.y + PLAYER_SIZE) obs.passed = true;
       });
-      obstacles.current = obstacles.current.filter(o => o.y < H + 50);
+      obstacles.current = obstacles.current.filter(o => o.y < H + 50 && !o.collided);
     }
 
     // --- RENDER ---
