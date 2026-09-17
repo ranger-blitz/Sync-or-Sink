@@ -1,5 +1,5 @@
 {
-  "name": "solana-dapp-next",
+  "name": "sync-or-sink",
   "version": "0.2.0",
   "overrides": {
     "qrcode.react": "1.0.1",
