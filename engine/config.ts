@@ -48,3 +48,5 @@ export const ENVIRONMENTS = [
     depth: "OUTER SPACE",
   },
 ] as const;
+
+export type Environment = (typeof ENVIRONMENTS)[number];
