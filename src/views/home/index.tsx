@@ -37,7 +37,6 @@ import type {
 } from '../../../engine/types';
 
 import { ENVIRONMENTS } from '../../../engine/config';
-const [currentEnv, setCurrentEnv] = useState<Environment>(ENVIRONMENTS[ENVIRONMENTS.length - 1]);
 
 
 import { SYNC_OR_SINK_ACHIEVEMENTS } from '../../../engine/achievements';
@@ -156,7 +155,7 @@ const GameSandbox: FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>('LINKED');
   const [score, setScore] = useState(0); 
   const [highScore, setHighScore] = useState(0);
-  const [currentEnv, setCurrentEnv] = useState(ENVIRONMENTS[0]);
+  const [currentEnv, setCurrentEnv] = useState<(typeof ENVIRONMENTS)[number]>(ENVIRONMENTS[ENVIRONMENTS.length - 1]);
   const [unlockedBadges, setUnlockedBadges] = useState<string[]>([]);
   const [ghostTimeRemaining, setGhostTimeRemaining] = useState(0); 
   const [countdown, setCountdown] = useState(3);
@@ -177,7 +176,7 @@ const GameSandbox: FC = () => {
   const requestRef = useRef<number>();
   const lastTimeRef = useRef<number>(0);
   const frameCount = useRef(0);
-  const speedRef = useRef(BASE_SPEED);
+  const speedRef = useRef<number>(BASE_SPEED);
   const shakeRef = useRef(0);
   
   const shieldActive = useRef(false); const shieldTimer = useRef(0);
