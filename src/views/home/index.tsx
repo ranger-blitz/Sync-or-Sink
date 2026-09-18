@@ -37,6 +37,8 @@ import type {
 } from '../../../engine/types';
 
 import { ENVIRONMENTS } from '../../../engine/config';
+const [currentEnv, setCurrentEnv] = useState<Environment>(ENVIRONMENTS[ENVIRONMENTS.length - 1]);
+
 
 import { SYNC_OR_SINK_ACHIEVEMENTS } from '../../../engine/achievements';
 
