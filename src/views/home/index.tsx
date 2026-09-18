@@ -38,6 +38,8 @@ import type {
 
 import { ENVIRONMENTS } from '../../../engine/config';
 
+import { SYNC_OR_SINK_ACHIEVEMENTS } from '../../../engine/achievements';
+
 
 // ASSETS
 const SOUNDS = {
