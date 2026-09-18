@@ -6,10 +6,13 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>The Drop - Scrolly Game Jam</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-      {/* We removed ContextProvider, AppBar, and Footer to fix the errors */}
+  <title>Sync or Sink</title>
+  <meta
+    name="description"
+    content="Sync or Sink — an arcade survival game."
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</Head>
       <Component {...pageProps} />
     </>
   );
