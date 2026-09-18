@@ -34,7 +34,7 @@ import type {
     BgPropType,
     BgProp,
     FloatingText,
-} from '../../../engine/types.ts';
+} from '../../../engine/types';
 
 import { ENVIRONMENTS } from '../../../engine/config';
 
