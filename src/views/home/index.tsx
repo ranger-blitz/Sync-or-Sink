@@ -36,6 +36,8 @@ import type {
     FloatingText,
 } from '../../../engine/types.ts';
 
+import { ENVIRONMENTS } from '../../../engine/config';
+
 
 // ASSETS
 const SOUNDS = {
@@ -50,15 +52,6 @@ const ACHIEVEMENTS = [
     { id: 'pro',    name: 'SKY WALKER',       desc: 'Reach 900m', score: 900, icon: '☁️' },
     { id: 'god',    name: 'STAR CLIMBER',     desc: 'Reach 1500m', score: 1500, icon: '⭐' },
     { id: 'survivor', name: 'UNTOUCHABLE',    desc: 'Reach 500m without Shields', score: 500, icon: '🛡️' },
-];
-
-const ENVIRONMENTS = [
-    { name: "THE ABYSS",    type: 'UNDERWATER', bgTop: '#000000', bgBot: '#001133', accent: '#00ffff', depth: 'CRUSHING DEPTH' },
-    { name: "MIDNIGHT ZONE",type: 'UNDERWATER', bgTop: '#001133', bgBot: '#003366', accent: '#39ff14', depth: 'DARK WATERS' },
-    { name: "THE REEF",     type: 'UNDERWATER', bgTop: '#003366', bgBot: '#0066cc', accent: '#ffffff', depth: 'SHALLOWS' },
-    { name: "SURFACE",      type: 'TRANSITION', bgTop: '#0066cc', bgBot: '#66ccff', accent: '#ffff00', depth: 'BREAKING SURFACE' },
-    { name: "STRATOSPHERE", type: 'SKY',        bgTop: '#001133', bgBot: '#44aaff', accent: '#ff00ff', depth: 'HIGH ALTITUDE' },
-    { name: "THE VOID",     type: 'SPACE',      bgTop: '#000000', bgBot: '#000000', accent: '#ff0000', depth: 'OUTER SPACE' }
 ];
 
 // --- 1. THE APP SHELL (HomeView) ---
