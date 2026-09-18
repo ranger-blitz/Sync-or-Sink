@@ -1,26 +1,27 @@
 // Next, React
 import { FC, useEffect, useState, useRef } from 'react';
+import { GAME_CONFIG } from '../../../engine/constants';
 
-// ❌ DO NOT EDIT ANYTHING ABOVE THIS LINE
+const  {
+  GOD_MODE,
+  SHOW_JUMP_LINE,
+  GRAVITY,
+  JUMP_FORCE,
+  BASE_SPEED,
+  SPEED_MULTIPLIER,
+  SPAWN_RATE_BASE,
+  PLAYER_SIZE,
+  HITBOX_PADDING,
+  JUMP_BUFFER_TIME,
+  FLOAT_HEIGHT,
+  METERS_PER_LEVEL,
+  PIXELS_TO_METERS,
+  WIDTH,
+  HEIGHT,
+  FLOOR,
+  MID,
+} = GAME_CONFIG
 
-// --- GAME CONFIGURATION ---
-const GOD_MODE = false; 
-const SHOW_JUMP_LINE = false;
-
-// PHYSICS
-const GRAVITY = 0.8;           
-const JUMP_FORCE = -12.2;       
-const BASE_SPEED = 7.5;         
-const SPEED_MULTIPLIER = 1.25;  
-const SPAWN_RATE_BASE = 75;     
-const PLAYER_SIZE = 24;
-const HITBOX_PADDING = 5;
-const JUMP_BUFFER_TIME = 150; 
-const FLOAT_HEIGHT = 70; 
-
-// PROGRESSION
-const METERS_PER_LEVEL = 300;   
-const PIXELS_TO_METERS = 0.015; 
 
 // ASSETS
 const SOUNDS = {
