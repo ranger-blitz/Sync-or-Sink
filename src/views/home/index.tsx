@@ -22,6 +22,20 @@ const  {
   MID,
 } = GAME_CONFIG
 
+import type {
+    Player,
+    GameMode,
+    GameState,
+    ObstacleType,
+    Lane,
+    Obstacle,
+    ParticleType,
+    Particle,
+    BgPropType,
+    BgProp,
+    FloatingText,
+} from '../../../engine/types.ts';
+
 
 // ASSETS
 const SOUNDS = {
@@ -46,15 +60,6 @@ const ENVIRONMENTS = [
     { name: "STRATOSPHERE", type: 'SKY',        bgTop: '#001133', bgBot: '#44aaff', accent: '#ff00ff', depth: 'HIGH ALTITUDE' },
     { name: "THE VOID",     type: 'SPACE',      bgTop: '#000000', bgBot: '#000000', accent: '#ff0000', depth: 'OUTER SPACE' }
 ];
-
-// TYPES
-type Player = { y: number; vy: number; grounded: boolean; color: string; jumps: number; flash: number; jumpBuffer: number; holding: boolean };
-type Obstacle = { x: number; y: number; w: number; h: number; type: 'BLOCK' | 'ORB' | 'GHOST' | 'GLITCH'; lane: 'LEFT' | 'RIGHT'; passed: boolean; collided: boolean };
-type Particle = { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number; type?: 'PULSE' | 'DUST' | 'BUBBLE' | 'SPLASH' | 'SPARK' };
-type BgProp = { x: number; y: number; size: number; speed: number; type: 'BUBBLE' | 'CLOUD' | 'STAR' | 'FISH' };
-type FloatingText = { x: number; y: number; text: string; life: number; color: string };
-type GameMode = 'LINKED' | 'DUAL';
-type GameState = 'START' | 'COUNTDOWN' | 'TUTORIAL' | 'PLAYING' | 'PAUSED' | 'GAMEOVER';
 
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
