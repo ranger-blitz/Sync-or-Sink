@@ -70,6 +70,9 @@ import { renderGame } from '../../../engine/renderer';
 import { startGameLoop, stopGameLoop } from '../../../engine/gameLoop';
 import { checkAchievements, recordRun } from '../../../engine/achievementChecks';
 import { SyncOrSink } from '../../games/sync-or-sink/SyncOrSink';
+import { LeaderboardView } from '../../components/arcade/LeaderboardView';
+import { AwardsView } from '../../components/arcade/AwardsView';
+import { ShopView } from '../../components/arcade/ShopView';
 import {
   updatePlayerPhysics,
   handlePlayerLanding,
@@ -107,75 +110,7 @@ export const HomeView: FC = ({ }) => {
   );
 };
 
-// --- 2. LEADERBOARD ---
-const LeaderboardView: FC = () => {
-    const [scores, setScores] = useState<any[]>([]);
-    useEffect(() => {
-        const fakeScores = [{ username: "DEEPSURVIVOR", score: 1540 }, { username: "REEFRUNNER", score: 1200 }, { username: "SURFACEKING", score: 850 }, { username: "ABYSSWALKER", score: 620 }];
-        const localHigh = localStorage.getItem('syncOrSinkHigh');
-        const localName = localStorage.getItem('syncOrSinkName') || "YOU";
-        if (localHigh) fakeScores.push({ username: localName, score: parseInt(localHigh) });
-        fakeScores.sort((a, b) => b.score - a.score);
-        setScores(fakeScores);
-    }, []);
-    return (
-        <div className="flex flex-col h-full bg-black p-6 overflow-y-auto">
-            <h2 className="text-2xl font-black italic text-center mb-6 text-cyan-400">ESCAPE RECORDS</h2>
-            <div className="space-y-2">
-                {scores.map((s, i) => (
-                    <div key={i} className={`flex justify-between items-center p-3 rounded-lg border ${s.username === (localStorage.getItem('syncOrSinkName') || "YOU") ? 'bg-white/20 border-cyan-400' : 'bg-white/5 border-white/10'}`}>
-                        <div className="flex items-center gap-3"><span className="text-sm font-bold w-6 text-yellow-400">#{i+1}</span><span className="text-sm font-bold text-white">{s.username}</span></div>
-                        <span className="text-sm font-mono text-white">{s.score}m</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-const AwardsView: FC = () => {
-    const [unlocked, setUnlocked] = useState<string[]>([]);
-    useEffect(() => {
-        const saved = localStorage.getItem('syncOrSinkBadges');
-        if (saved) setUnlocked(JSON.parse(saved));
-    }, []);
-
-    return (
-        <div className="flex flex-col h-full bg-black p-6 overflow-y-auto">
-            <h2 className="text-2xl font-black italic text-center mb-6 text-yellow-400">AWARDS & RULES</h2>
-            <div className="bg-white/5 p-4 rounded-xl border border-white/10 mb-6">
-                <h3 className="text-sm font-bold text-white mb-2 border-b border-white/10 pb-2">FLIGHT MANUAL</h3>
-                <ul className="text-xs text-gray-400 space-y-2 list-disc pl-4">
-                    <li><strong className="text-red-400">INSTANT DEATH:</strong> Hitting a block kills you immediately.</li>
-                    <li><strong className="text-cyan-400">SHIELDS:</strong> Collect Orbs to survive ONE hit.</li>
-                    <li><strong className="text-yellow-400">CHOICE:</strong> Stay grounded to pick power ups.</li>
-                </ul>
-            </div>
-            <h3 className="text-sm font-bold text-white mb-2">ACHIEVEMENTS</h3>
-            <div className="grid grid-cols-1 gap-2">
-                {SYNC_OR_SINK_ACHIEVEMENTS.map((ach) => (
-                    <div key={ach.id} className={`flex items-center gap-3 p-3 rounded border ${unlocked.includes(ach.id) ? 'bg-yellow-500/10 border-yellow-500' : 'bg-white/5 border-white/10 opacity-50'}`}>
-                        <span className="text-2xl">{ach.icon}</span>
-                        <div>
-                            <p className={`text-xs font-bold ${unlocked.includes(ach.id) ? 'text-yellow-400' : 'text-gray-500'}`}>{ach.name}</p>
-                            <p className="text-[10px] text-gray-400">{ach.desc}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-const ShopView: FC = () => (
-    <div className="flex flex-col h-full items-center justify-center p-8 text-center bg-black space-y-4">
-        <span className="text-4xl mb-4">🛒</span><h2 className="text-xl font-bold mb-2">ESCAPE POD SHOP</h2>
-        <div className="space-y-2 w-full max-w-[280px]">
-            <div className="bg-white/5 border border-gray-700 p-3 rounded flex justify-between items-center"><span className="text-xs text-gray-500">🔒 NEON TRAIL</span><span className="text-[10px] text-gray-600">Reach 500m</span></div>
-            <div className="bg-white/5 border border-gray-700 p-3 rounded flex justify-between items-center"><span className="text-xs text-gray-500">🔒 TURBO BOOSTERS</span><span className="text-[10px] text-gray-600">Reach 1000m</span></div>
-        </div>
-    </div>
-);
+// --- 2. THE ARCade views ---
 
 // --- 3. THE GAME LOGIC ---
 const GameSandbox: FC = () => {
@@ -331,7 +266,7 @@ const GameSandbox: FC = () => {
             if (!GOD_MODE) {
               gameStateRef.current = 'GAMEOVER';
               setGameState('GAMEOVER');
-              checkAchievements(scoreRef.current);
+              trackRunEnd();
               pulse(400);
               if (bgmRef.current) {
                 bgmRef.current.pause();
@@ -439,7 +374,7 @@ const GameSandbox: FC = () => {
             if (!GOD_MODE) {
               gameStateRef.current = 'GAMEOVER';
               setGameState('GAMEOVER');
-              checkAchievements(scoreRef.current);
+              trackRunEnd();
               pulse(400);
               if (bgmRef.current) {
                 bgmRef.current.pause();
