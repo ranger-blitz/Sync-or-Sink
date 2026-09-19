@@ -180,6 +180,7 @@ const GameSandbox: FC = () => {
   const shakeRef = useRef(0);
   
   const shieldActive = useRef(false); const shieldTimer = useRef(0);
+  const usedShieldRef = useRef(false);
   const ghostActive = useRef(false); const ghostTimer = useRef(0);
   const glitchActive = useRef(false); const glitchTimer = useRef(0);
   const audioCtx = useRef<Record<string, HTMLAudioElement>>({});
@@ -232,7 +233,9 @@ const GameSandbox: FC = () => {
   }
   const checkAchievements = (finalScore: number) => {
       const newBadges = [...unlockedBadges]; let changed = false;
-      ACHIEVEMENTS.forEach(ach => { if (finalScore >= ach.score && !newBadges.includes(ach.id)) { newBadges.push(ach.id); changed = true; } });
+      ACHIEVEMENTS.forEach(ach => { if (finalScore >= ach.score && !newBadges.includes(ach.id)) 
+        {if (ach.id === 'survivor' && usedShieldRef.current)return; 
+          newBadges.push(ach.id); changed = true; } });
       if (changed) { setUnlockedBadges(newBadges); localStorage.setItem('syncOrSinkBadges', JSON.stringify(newBadges)); }
       if (finalScore > highScoreRef.current) { setHighScore(finalScore); highScoreRef.current = finalScore; localStorage.setItem('syncOrSinkHigh', finalScore.toString()); }
       const newRuns = (parseInt(localStorage.getItem('syncOrSinkRuns') || '0')) + 1;
@@ -247,6 +250,7 @@ const GameSandbox: FC = () => {
     pRight.current = { y: 450, vy: 0, grounded: true, color: ENVIRONMENTS[0].accent, jumps: 0, flash: 0, jumpBuffer: 0, holding: false };
     obstacles.current = []; particles.current = []; texts.current = []; bgProps.current = [];
     shieldActive.current = false; shieldTimer.current = 0;
+    usedShieldRef.current = false;
     ghostActive.current = false; ghostTimer.current = 0; glitchActive.current = false; glitchTimer.current = 0;
     setGhostTimeRemaining(0); lastTimeRef.current = 0;
   };
@@ -319,10 +323,13 @@ const GameSandbox: FC = () => {
         const spawnSpecial = (type: 'ORB'|'GHOST'|'GLITCH') => { const lane = Math.random() > 0.5 ? 'LEFT' : 'RIGHT'; obstacles.current.push({ x: lane === 'LEFT' ? MID/2 - 25 : MID + MID/2 - 25, y: -50, w: 50, h: 25, type: type, lane: lane, passed: false, collided: false }); };
         
         const rand = Math.random();
-        if (rand < 0.06 && !ghostActive.current) spawnSpecial('GHOST'); 
-        else if (rand < 0.06 && !glitchActive.current) spawnSpecial('GLITCH');
-        else if (rand < 0.1 && !shieldActive.current) spawnSpecial('ORB'); 
-        else { 
+        if (rand < 0.05 && !ghostActive.current) {
+          spawnSpecial("GHOST");
+          } else if (rand < 0.06 && !glitchActive.current) {
+            spawnSpecial("GLITCH");
+          } else if (rand < 0.10 && !shieldActive.current) {
+            spawnSpecial("ORB");
+          } else {
             const pattern = Math.random();
             if (pattern < 0.30) spawnLeft(); 
             else if (pattern < 0.60) spawnRight(); 
@@ -351,7 +358,8 @@ const GameSandbox: FC = () => {
           if (obs.type === 'ORB') { 
             if (!p.grounded) return; 
             obs.collided = true;
-            shieldActive.current = true; 
+            shieldActive.current = true;
+            usedShieldRef.current = true;
             shieldTimer.current = 300; 
             spawnText(pX, p.y - 40, "SHIELD UP!", '#00BFFF'); 
             triggerEvent('level', pX, p.y, '#FFF'); 
@@ -459,7 +467,7 @@ const GameSandbox: FC = () => {
       if (ghostActive.current) { ctx.globalAlpha = 0.4; ctx.shadowBlur = 0; } else { ctx.shadowBlur = 20; ctx.shadowColor = color; }
       ctx.fillStyle = color;
       if (shieldActive.current) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x + PLAYER_SIZE/2, p.y + PLAYER_SIZE/2, PLAYER_SIZE, 0, Math.PI*2); ctx.stroke(); }
-      let w = PLAYER_SIZE, h = PLAYER_SIZE; if (!p.grounded) { h = PLAYER_SIZE + 4; w = PLAYER_SIZE - 4; }
+      let w: number = PLAYER_SIZE, h: number = PLAYER_SIZE; if (!p.grounded) { h = PLAYER_SIZE + 4; w = PLAYER_SIZE - 4; }
       ctx.fillRect(x + (PLAYER_SIZE - w) / 2, p.y, w, h); ctx.globalAlpha = 1.0; 
     };
     drawPlayer(pLeft.current, MID / 2, ENVIRONMENTS[nextEnvIdx.current].accent); 
@@ -523,7 +531,12 @@ const GameSandbox: FC = () => {
       handleStartGame(); 
   }; 
   
-  const handleHome = (e: React.MouseEvent) => { e.stopPropagation(); gameStateRef.current = 'START'; setGameState('START'); initWorld(); if (bgmRef.current) bgmRef.current.pause(); }
+  const handleHome = (e: React.MouseEvent) => { 
+    e.stopPropagation(); 
+    if (scoreRef.current > 0) {
+      checkAchievements(scoreRef.current);
+    }
+    gameStateRef.current = 'START'; setGameState('START'); initWorld(); if (bgmRef.current) bgmRef.current.pause(); }
   const handlePause = (e: React.MouseEvent) => { e.stopPropagation(); gameStateRef.current = 'PAUSED'; setGameState('PAUSED'); if (bgmRef.current) bgmRef.current.pause(); }
   const handleResume = (e: React.MouseEvent) => { e.stopPropagation(); gameStateRef.current = 'PLAYING'; setGameState('PLAYING'); lastTimeRef.current = 0; if (bgmRef.current && !isMuted) bgmRef.current.play(); }
   const handleShare = () => { const text = `I ascended to ${score}m in SyncOrSink! #SyncOrSink 🚀`; window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank'); };
