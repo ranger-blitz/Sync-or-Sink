@@ -196,7 +196,7 @@ export const renderGame = ({
   drawPlayer(pLeft.current, MID / 2, ENVIRONMENTS[nextEnvIdx].accent);
   drawPlayer(pRight.current, MID + MID / 2, '#FFF');
 
-  particles.current.forEach((p, i) => {
+  particles.current.forEach((p) => {
     if (p.type === 'PULSE') {
       p.size += 3;
       p.life -= 0.05;
@@ -228,8 +228,9 @@ export const renderGame = ({
       ctx.fillStyle = p.color;
       ctx.fillRect(p.x, p.y, p.size, p.size);
     }
-    if (p.life <= 0) particles.current.splice(i, 1);
   });
+
+  particles.current = particles.current.filter((p) => p.life > 0);
 
   texts.current.forEach((t) => {
     t.y -= 1;
@@ -242,6 +243,8 @@ export const renderGame = ({
       ctx.globalAlpha = 1.0;
     }
   });
+
+  texts.current = texts.current.filter((t) => t.life > 0);
 
   if (glitchActive) {
     ctx.save();
