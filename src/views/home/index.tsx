@@ -38,8 +38,12 @@ import type {
 
 import { ENVIRONMENTS } from '../../../engine/config';
 
-
 import { SYNC_OR_SINK_ACHIEVEMENTS } from '../../../engine/achievements';
+import {
+  spawnExplosion,
+  spawnDust,
+  spawnText,
+} from '../../../engine/particles';
 
 
 // ASSETS
@@ -255,9 +259,6 @@ const GameSandbox: FC = () => {
     else { type = 'STAR'; size = Math.random() * 2 + 1; speed = Math.random() * 3 + 1; }
     bgProps.current.push({ x, y, size, speed, type });
   };
-  const spawnExplosion = (x: number, y: number, color: string, count: number = 15) => { for (let i = 0; i < count; i++) particles.current.push({ x: x+10, y: y+10, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1.0, color: color, size: Math.random()*4+2, type: 'SPARK' }); };
-  const spawnDust = (x: number, y: number) => { for (let i = 0; i < 5; i++) particles.current.push({ x: x+(Math.random()*20-10), y: y, vx: (Math.random()-0.5)*4, vy: -Math.random()*2, life: 0.6, color: '#fff', size: Math.random()*3+1, type: 'DUST' }); };
-  const spawnText = (x: number, y: number, text: string, color: string) => { texts.current.push({ x, y, text, life: 1.0, color }); };
 
   // --- GAME LOOP ---
   const update = (timestamp: number) => {
@@ -279,13 +280,13 @@ const GameSandbox: FC = () => {
         levelRef.current = newLevel; prevEnvIdx.current = nextEnvIdx.current; nextEnvIdx.current = Math.min(newLevel, ENVIRONMENTS.length - 1);
         transitionProgress.current = 0; setCurrentEnv(ENVIRONMENTS[nextEnvIdx.current]); speedRef.current = BASE_SPEED * Math.pow(SPEED_MULTIPLIER, newLevel);
         const newEnv = ENVIRONMENTS[nextEnvIdx.current];
-        spawnText(MID, 200, `🌊 ${newEnv.name}`, newEnv.accent); spawnText(MID, 230, newEnv.depth || "", '#888');
+        spawnText(texts.current, MID, 200, `🌊 ${newEnv.name}`, newEnv.accent); spawnText(texts.current, MID, 230, newEnv.depth || "", '#888');
         triggerEvent('level', MID, 300, '#FFF'); pulse(100); 
       }
 
       if (shieldActive.current) { shieldTimer.current -= deltaTime; if (shieldTimer.current <= 0) shieldActive.current = false; }
-      if (ghostActive.current) { ghostTimer.current -= deltaTime; const remaining = Math.ceil(ghostTimer.current / 60); setGhostTimeRemaining(remaining > 0 ? remaining : 0); if (ghostTimer.current <= 0) { ghostActive.current = false; setGhostTimeRemaining(0); spawnText(MID, 300, "PHASE ENDED", '#FFF'); pulse(50); } }
-      if (glitchActive.current) { glitchTimer.current -= deltaTime; shakeRef.current = 5; if (glitchTimer.current <= 0) { glitchActive.current = false; spawnText(MID, 300, "SURGE ENDED", '#FFF'); pulse(50); } }
+      if (ghostActive.current) { ghostTimer.current -= deltaTime; const remaining = Math.ceil(ghostTimer.current / 60); setGhostTimeRemaining(remaining > 0 ? remaining : 0); if (ghostTimer.current <= 0) { ghostActive.current = false; setGhostTimeRemaining(0); spawnText(texts.current, MID, 300, "PHASE ENDED", '#FFF'); pulse(50); } }
+      if (glitchActive.current) { glitchTimer.current -= deltaTime; shakeRef.current = 5; if (glitchTimer.current <= 0) { glitchActive.current = false; spawnText(texts.current, MID, 300, "SURGE ENDED", '#FFF'); pulse(50); } }
 
       const activeEnv = ENVIRONMENTS[nextEnvIdx.current];
       if (Math.random() < 0.05) spawnBgProp(activeEnv.type);
@@ -297,9 +298,9 @@ const GameSandbox: FC = () => {
         if (p.flash > 0) p.flash -= deltaTime; if (p.jumpBuffer > 0) p.jumpBuffer -= deltaTime * 16; 
         
         if (p.y > FLOOR - PLAYER_SIZE) {
-          if (!p.grounded) spawnDust(p === pLeft.current ? MID/2 : MID + MID/2, FLOOR);
+          if (!p.grounded) spawnDust(particles.current, p === pLeft.current ? MID/2 : MID + MID/2, FLOOR);
           p.y = FLOOR - PLAYER_SIZE; p.vy = 0; p.grounded = true; p.jumps = 0;
-          if (p.jumpBuffer > 0) { p.vy = JUMP_FORCE; p.jumps++; p.grounded = false; p.jumpBuffer = 0; spawnExplosion(p === pLeft.current ? 100 : 300, p.y + 20, '#fff', 5); }
+          if (p.jumpBuffer > 0) { p.vy = JUMP_FORCE; p.jumps++; p.grounded = false; p.jumpBuffer = 0; spawnExplosion(particles.current, p === pLeft.current ? 100 : 300, p.y + 20, '#fff', 5); }
         } else {
             p.grounded = false;
             if (p.y > H + 50) {
@@ -354,7 +355,7 @@ const GameSandbox: FC = () => {
             shieldActive.current = true;
             usedShieldRef.current = true;
             shieldTimer.current = 300; 
-            spawnText(pX, p.y - 40, "SHIELD UP!", '#00BFFF'); 
+            spawnText(texts.current, pX, p.y - 40, "SHIELD UP!", '#00BFFF'); 
             triggerEvent('level', pX, p.y, '#FFF'); 
             pulse(50); 
             return; 
@@ -364,7 +365,7 @@ const GameSandbox: FC = () => {
             obs.collided = true;
             ghostActive.current = true; 
             ghostTimer.current = 480; 
-            spawnText(MID, 300, "👻 PHASE SHIFT!", '#d946ef'); 
+            spawnText(texts.current, MID, 300, "👻 PHASE SHIFT!", '#d946ef'); 
             triggerEvent('level', pX, p.y, '#d946ef'); 
             pulse(50); 
             return; 
@@ -375,7 +376,7 @@ const GameSandbox: FC = () => {
             obs.collided = true;
             glitchActive.current = true; 
             glitchTimer.current = 360; 
-            spawnText(MID, 300, "⚡ SURGE SPEED!", '#ff0000'); 
+            spawnText(texts.current, MID, 300, "⚡ SURGE SPEED!", '#ff0000'); 
             shakeRef.current = 20; 
             triggerEvent('crash', pX, p.y, '#F00'); 
             pulse(150); 
@@ -386,15 +387,15 @@ const GameSandbox: FC = () => {
             obs.collided = true;
             if (shieldActive.current) { 
               shieldActive.current = false; 
-              spawnExplosion(pX, p.y, '#FFF', 20); 
-              spawnText(MID, 300, "SHIELD SAVED YOU", '#FFF'); 
+              spawnExplosion(particles.current, pX, p.y, '#FFF', 20); 
+              spawnText(texts.current, MID, 300, "SHIELD SAVED YOU", '#FFF'); 
               shakeRef.current = 10; 
               triggerEvent('crash', pX, p.y, '#F00'); 
               pulse(100); 
             } 
             else if (p.flash <= 0) { 
               shakeRef.current = 30; 
-              spawnExplosion(pX, p.y, activeEnv.accent, 30); 
+              spawnExplosion(particles.current, pX, p.y, activeEnv.accent, 30); 
               triggerEvent('crash', pX, p.y, '#F00');
               if (!GOD_MODE) { 
                 gameStateRef.current = 'GAMEOVER'; 
@@ -500,7 +501,7 @@ const GameSandbox: FC = () => {
 
   useEffect(() => { initWorld(); requestRef.current = requestAnimationFrame(update); return () => cancelAnimationFrame(requestRef.current!); }, []);
 
-  const doJump = (p: Player, xPos: number) => { p.jumpBuffer = JUMP_BUFFER_TIME; p.holding = true; if (gameStateRef.current === 'PLAYING' && p.jumps < 2) { p.vy = JUMP_FORCE; p.jumps++; p.grounded = false; p.jumpBuffer = 0; spawnExplosion(xPos, p.y + 20, '#fff', 5); triggerEvent('jump', xPos, p.y + 20, '#fff'); } };
+  const doJump = (p: Player, xPos: number) => { p.jumpBuffer = JUMP_BUFFER_TIME; p.holding = true; if (gameStateRef.current === 'PLAYING' && p.jumps < 2) { p.vy = JUMP_FORCE; p.jumps++; p.grounded = false; p.jumpBuffer = 0; spawnExplosion(particles.current, xPos, p.y + 20, '#fff', 5); triggerEvent('jump', xPos, p.y + 20, '#fff'); } };
   const releaseJump = (p: Player) => { p.holding = false; };
   const handlePointerDown = (e: any) => { if (gameStateRef.current !== 'PLAYING') return; if (gameModeRef.current === 'LINKED') { doJump(pLeft.current, 100); doJump(pRight.current, 300); } else { const rect = canvasRef.current?.getBoundingClientRect(); if (!rect) return; const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX }]; touches.forEach((t: any) => { if (t.clientX - rect.left < rect.width / 2) doJump(pLeft.current, 100); else doJump(pRight.current, 300); }); } };
   const handlePointerUp = (e: any) => { if (gameModeRef.current === 'LINKED') { releaseJump(pLeft.current); releaseJump(pRight.current); } else { releaseJump(pLeft.current); releaseJump(pRight.current); } };
