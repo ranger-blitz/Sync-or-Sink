@@ -594,6 +594,7 @@ export const GameSandbox: FC<GameProps> = ({
         countdownTimerRef.current = null;
         setGameState('PLAYING');
         gameStateRef.current = 'PLAYING';
+        onGameStart?.();
         initWorld();
       }
     }, 600);
