@@ -71,8 +71,12 @@ export const handleObstacleCollision = ({
   if (obstacle.type === 'GHOST') return 'GHOST';
   if (obstacle.type === 'GLITCH') return 'GLITCH';
 
-  if (ghostActive || glitchActive || shieldActive || isJumpingOver) {
+  if (ghostActive || glitchActive || isJumpingOver) {
     return 'NONE';
+  }
+
+  if (shieldActive) {
+    return 'BLOCK';
   }
 
   return 'BLOCK';
