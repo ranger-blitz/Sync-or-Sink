@@ -44,15 +44,13 @@ import {
   spawnDust,
   spawnText,
 } from '../../../engine/particles';
-
-
-// ASSETS
-const SOUNDS = {
-    JUMP: '/sounds/jump.wav',
-    CRASH: '/sounds/crash.wav',
-    LEVEL: '/sounds/levelup.mp3',
-    BGM: '/sounds/bgm.mp3',
-};
+import {
+  createGameAudio,
+  playSound,
+  playBgm,
+  stopBgm,
+  type AudioKey,
+} from '../../../engine/audio';
 
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
@@ -203,11 +201,9 @@ const GameSandbox: FC = () => {
       const savedBadges = localStorage.getItem('syncOrSinkBadges');
       if (savedBadges) setUnlockedBadges(JSON.parse(savedBadges));
 
-      audioCtx.current['jump'] = new Audio(SOUNDS.JUMP);
-      audioCtx.current['crash'] = new Audio(SOUNDS.CRASH);
-      audioCtx.current['level'] = new Audio(SOUNDS.LEVEL);
-      Object.values(audioCtx.current).forEach(a => a.volume = 0.4);
-      const bgm = new Audio(SOUNDS.BGM); bgm.loop = true; bgm.volume = 0.6; bgmRef.current = bgm;
+      const gameAudio = createGameAudio();
+      audioCtx.current = gameAudio.effects;
+      bgmRef.current = gameAudio.bgm;
 
       const handlePauseTrigger = () => { if (gameStateRef.current === 'PLAYING') { gameStateRef.current = 'PAUSED'; setGameState('PAUSED'); if (bgmRef.current) bgmRef.current.pause(); } };
       document.addEventListener('visibilitychange', () => { if (document.hidden) handlePauseTrigger(); });
@@ -217,15 +213,16 @@ const GameSandbox: FC = () => {
 
   useEffect(() => {
       isMutedRef.current = isMuted;
-      const bgm = bgmRef.current; if (!bgm) return;
-      if (isMuted) { bgm.pause(); return; }
-      if (gameState === 'PLAYING') { const playPromise = bgm.play(); if (playPromise !== undefined) playPromise.catch(e => console.log(e)); } 
-      else { bgm.pause(); if (gameState === 'GAMEOVER') bgm.currentTime = 0; }
+      if (gameState === 'PLAYING') {
+        playBgm(bgmRef.current, isMuted);
+      } else {
+        stopBgm(bgmRef.current, gameState === 'GAMEOVER');
+      }
   }, [gameState, isMuted]);
 
   const pulse = (ms: number) => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms); };
   const triggerEvent = (key: string, x: number, y: number, color: string) => {
-      if (!isMutedRef.current && audioCtx.current[key]) { audioCtx.current[key].currentTime = 0; audioCtx.current[key].play().catch(() => {}); }
+      playSound(audioCtx.current, key as AudioKey, isMutedRef.current);
       particles.current.push({ x: x, y: y, vx: 0, vy: 0, life: 1.0, color: color, size: 10, type: 'PULSE' });
   }
   const checkAchievements = (finalScore: number) => {
@@ -507,7 +504,7 @@ const GameSandbox: FC = () => {
   const handlePointerUp = (e: any) => { if (gameModeRef.current === 'LINKED') { releaseJump(pLeft.current); releaseJump(pRight.current); } else { releaseJump(pLeft.current); releaseJump(pRight.current); } };
   useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if (e.repeat) return; if (e.key === 'Escape' && gameStateRef.current === 'PLAYING') { gameStateRef.current = 'PAUSED'; setGameState('PAUSED'); if (bgmRef.current) bgmRef.current.pause(); return; } if (gameStateRef.current === 'PLAYING') { if (gameModeRef.current === 'LINKED') { if (e.code === 'Space' || e.key === 'ArrowUp') { doJump(pLeft.current, 100); doJump(pRight.current, 300); } } else { if (e.key === 'ArrowLeft' || e.key === 'a') doJump(pLeft.current, 100); if (e.key === 'ArrowRight' || e.key === 'd') doJump(pRight.current, 300); } } }; const handleKeyUp = (e: KeyboardEvent) => { if (gameModeRef.current === 'LINKED') { if (e.code === 'Space' || e.key === 'ArrowUp') { releaseJump(pLeft.current); releaseJump(pRight.current); } } else { if (e.key === 'ArrowLeft' || e.key === 'a') releaseJump(pLeft.current); if (e.key === 'ArrowRight' || e.key === 'd') releaseJump(pRight.current); } }; window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp); return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); }; }, []);
   const toggleMode = (e: React.MouseEvent) => { e.stopPropagation(); const newMode = gameMode === 'LINKED' ? 'DUAL' : 'LINKED'; setGameMode(newMode); gameModeRef.current = newMode; };
-  const handleStartGame = () => { if (bgmRef.current && !isMuted) { bgmRef.current.currentTime = 0; bgmRef.current.play().catch(() => {}); } if (showNameInput && username.trim().length > 0) { localStorage.setItem('syncOrSinkName', username); setShowNameInput(false); } setGameState('COUNTDOWN'); gameStateRef.current = 'COUNTDOWN'; setCountdown(3); let count = 3; const timer = setInterval(() => { count--; if (count > 0) setCountdown(count); else { clearInterval(timer); setGameState('PLAYING'); gameStateRef.current = 'PLAYING'; initWorld(); } }, 600); };
+  const handleStartGame = () => { if (bgmRef.current && !isMuted) { playBgm(bgmRef.current, false); bgmRef.current.currentTime = 0; } if (showNameInput && username.trim().length > 0) { localStorage.setItem('syncOrSinkName', username); setShowNameInput(false); } setGameState('COUNTDOWN'); gameStateRef.current = 'COUNTDOWN'; setCountdown(3); let count = 3; const timer = setInterval(() => { count--; if (count > 0) setCountdown(count); else { clearInterval(timer); setGameState('PLAYING'); gameStateRef.current = 'PLAYING'; initWorld(); } }, 600); };
   
   const initiateDive = () => {
       const hasSeenTutorial = localStorage.getItem('syncOrSinkTutorialSeen');
@@ -527,10 +524,7 @@ const GameSandbox: FC = () => {
   
   const handleHome = (e: React.MouseEvent) => { 
     e.stopPropagation(); 
-    if (scoreRef.current > 0) {
-      checkAchievements(scoreRef.current);
-    }
-    gameStateRef.current = 'START'; setGameState('START'); initWorld(); if (bgmRef.current) bgmRef.current.pause(); }
+    gameStateRef.current = 'START'; setGameState('START'); initWorld(); stopBgm(bgmRef.current, true); }
   const handlePause = (e: React.MouseEvent) => { e.stopPropagation(); gameStateRef.current = 'PAUSED'; setGameState('PAUSED'); if (bgmRef.current) bgmRef.current.pause(); }
   const handleResume = (e: React.MouseEvent) => { e.stopPropagation(); gameStateRef.current = 'PLAYING'; setGameState('PLAYING'); lastTimeRef.current = 0; if (bgmRef.current && !isMuted) bgmRef.current.play(); }
   const handleShare = () => { const text = `I ascended to ${score}m in SyncOrSink! #SyncOrSink 🚀`; window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank'); };
