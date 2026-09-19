@@ -51,6 +51,11 @@ import {
   stopBgm,
   type AudioKey,
 } from '../../../engine/audio';
+import {
+  spawnBgProp,
+  spawnBlock,
+  spawnSpecial,
+} from '../../../engine/spawning';
 
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
@@ -249,14 +254,6 @@ const GameSandbox: FC = () => {
     setGhostTimeRemaining(0); lastTimeRef.current = 0;
   };
 
-  const spawnBgProp = (envType: string) => {
-    const x = Math.random() * 400; const y = -50; let size = 0, speed = 0, type: any = 'BUBBLE';
-    if (envType === 'UNDERWATER') { const rand = Math.random(); if (rand < 0.7) { type = 'BUBBLE'; size = Math.random() * 4 + 2; speed = Math.random() * 1 + 0.5; } else { type = 'FISH'; size = Math.random() * 10 + 5; speed = Math.random() * 2 + 1; } } 
-    else if (envType === 'SKY' || envType === 'TRANSITION') { type = 'CLOUD'; size = Math.random() * 40 + 20; speed = Math.random() * 0.5 + 0.2; } 
-    else { type = 'STAR'; size = Math.random() * 2 + 1; speed = Math.random() * 3 + 1; }
-    bgProps.current.push({ x, y, size, speed, type });
-  };
-
   // --- GAME LOOP ---
   const update = (timestamp: number) => {
     const canvas = canvasRef.current; if (!canvas) return;
@@ -286,7 +283,7 @@ const GameSandbox: FC = () => {
       if (glitchActive.current) { glitchTimer.current -= deltaTime; shakeRef.current = 5; if (glitchTimer.current <= 0) { glitchActive.current = false; spawnText(texts.current, MID, 300, "SURGE ENDED", '#FFF'); pulse(50); } }
 
       const activeEnv = ENVIRONMENTS[nextEnvIdx.current];
-      if (Math.random() < 0.05) spawnBgProp(activeEnv.type);
+      if (Math.random() < 0.05) spawnBgProp(bgProps.current, activeEnv.type, WIDTH);
       bgProps.current.forEach(p => p.y += (currentSpeed * 0.5 * p.speed) * deltaTime); bgProps.current = bgProps.current.filter(p => p.y < H + 50);
 
       [pLeft.current, pRight.current].forEach((p) => {
@@ -309,28 +306,19 @@ const GameSandbox: FC = () => {
       frameCount.current += deltaTime;
       const currentSpawnRate = Math.max(30, SPAWN_RATE_BASE - (levelRef.current * 5));
       if (frameCount.current > currentSpawnRate) {
-        const spawnLeft = (yOffset = 0) => obstacles.current.push({ x: MID/2 - 25, y: -50 + yOffset, w: 50, h: 30, type: 'BLOCK', lane: 'LEFT', passed: false, collided: false });
-        const spawnRight = (yOffset = 0) => obstacles.current.push({ x: MID + (MID/2) - 25, y: -50 + yOffset, w: 50, h: 30, type: 'BLOCK', lane: 'RIGHT', passed: false, collided: false });
-        const spawnSpecial = (type: 'ORB'|'GHOST'|'GLITCH') => { const lane = Math.random() > 0.5 ? 'LEFT' : 'RIGHT'; obstacles.current.push({ x: lane === 'LEFT' ? MID/2 - 25 : MID + MID/2 - 25, y: -50, w: 50, h: 25, type: type, lane: lane, passed: false, collided: false }); };
-        
         const rand = Math.random();
-        if (rand < 0.05 && !ghostActive.current) {
-          spawnSpecial("GHOST");
-          } else if (rand < 0.06 && !glitchActive.current) {
-            spawnSpecial("GLITCH");
-          } else if (rand < 0.10 && !shieldActive.current) {
-            spawnSpecial("ORB");
+        if (rand < 0.03 && !ghostActive.current) {
+          spawnSpecial(obstacles.current, 'GHOST', MID);
+        } else if (rand < 0.06 && !glitchActive.current) {
+          spawnSpecial(obstacles.current, 'GLITCH', MID);
+        } else if (rand < 0.10 && !shieldActive.current) {
+          spawnSpecial(obstacles.current, 'ORB', MID);
+        } else {
+          if (Math.random() > 0.5) {
+            spawnBlock(obstacles.current, 'LEFT', MID);
           } else {
-            const pattern = Math.random();
-            if (pattern < 0.30) spawnLeft(); 
-            else if (pattern < 0.60) spawnRight(); 
-            else {
-                const stagger = Math.random();
-                const shaveGap = -(currentSpeed * 22);
-                if (stagger < 0.33) { spawnLeft(); spawnRight(); } 
-                else if (stagger < 0.66) { spawnLeft(0); spawnRight(shaveGap); } 
-                else { spawnRight(0); spawnLeft(shaveGap); } 
-            }
+            spawnBlock(obstacles.current, 'RIGHT', MID);
+          }
         }
         frameCount.current = 0;
       }
