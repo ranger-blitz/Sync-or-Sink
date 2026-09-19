@@ -293,7 +293,7 @@ const GameSandbox: FC = () => {
 
       const activeEnv = ENVIRONMENTS[nextEnvIdx.current];
       if (Math.random() < 0.05) spawnBgProp(bgProps.current, activeEnv.type, WIDTH);
-      bgProps.current.forEach(p => p.y += (currentSpeed * 0.5 * p.speed) * deltaTime); bgProps.current = bgProps.current.filter(p => p.y < H + 50);
+      bgProps.current.forEach(p => p.y += (currentSpeed * 0.5 * p.speed) * deltaTime); bgProps.current = bgProps.current.filter(p => p.y < HEIGHT + 50);
 
       [pLeft.current, pRight.current].forEach((p) => {
         if (!p.holding && p.vy < 0) p.vy *= Math.pow(0.85, deltaTime);
@@ -306,7 +306,7 @@ const GameSandbox: FC = () => {
           if (p.jumpBuffer > 0) { p.vy = JUMP_FORCE; p.jumps++; p.grounded = false; p.jumpBuffer = 0; spawnExplosion(particles.current, p === pLeft.current ? 100 : 300, p.y + 20, '#fff', 5); }
         } else {
             p.grounded = false;
-            if (p.y > H + 50) {
+            if (p.y > HEIGHT + 50) {
                if (!GOD_MODE) { gameStateRef.current = 'GAMEOVER'; setGameState('GAMEOVER'); checkAchievements(scoreRef.current); pulse(400); if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } }
             }
         }
@@ -403,7 +403,7 @@ const GameSandbox: FC = () => {
         }
         if (!obs.passed && !obs.collided && obs.y > p.y + PLAYER_SIZE) obs.passed = true;
       });
-      obstacles.current = obstacles.current.filter(o => o.y < H + 50 && !o.collided);
+      obstacles.current = obstacles.current.filter(o => o.y < HEIGHT + 50 && !o.collided);
     }
 
     // --- RENDER ---
@@ -437,10 +437,10 @@ const GameSandbox: FC = () => {
     }
 
     // *** CHANGED: CYAN FLOOR LINE with GLOW ***
-    ctx.fillStyle = '#00FFFF'; ctx.shadowBlur = 10; ctx.shadowColor = '#00FFFF'; ctx.fillRect(0, FLOOR, W, 2); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#00FFFF'; ctx.shadowBlur = 10; ctx.shadowColor = '#00FFFF'; ctx.fillRect(0, FLOOR, WIDTH, 2); ctx.shadowBlur = 0;
     
     // CENTER LINE
-    ctx.shadowBlur = 20; ctx.shadowColor = '#00FFFF'; ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(MID, 0); ctx.lineTo(MID, H); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.shadowBlur = 20; ctx.shadowColor = '#00FFFF'; ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(MID, 0); ctx.lineTo(MID, HEIGHT); ctx.stroke(); ctx.shadowBlur = 0;
 
     obstacles.current.forEach(obs => {
       if (obs.type === 'ORB') { ctx.shadowBlur = 20; ctx.shadowColor = '#00BFFF'; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(obs.x + obs.w/2, obs.y + obs.h/2, 10, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; } 
