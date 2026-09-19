@@ -107,6 +107,7 @@ export const GameSandbox: FC<GameProps> = ({
   const transitionProgress = useRef(1);
   const prevEnvIdx = useRef(0);
   const nextEnvIdx = useRef(0);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const pLeft = useRef<Player>(resetPlayer(ENVIRONMENTS[0].accent));
   const pRight = useRef<Player>(resetPlayer('#fff'));
@@ -445,7 +446,13 @@ export const GameSandbox: FC<GameProps> = ({
   useEffect(() => {
     initWorld();
     const stop = startGameLoop(update);
-    return () => stopGameLoop(stop);
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+      stopGameLoop(stop);
+    };
   }, []);
 
   const doJump = (p: Player, xPos: number) => {
@@ -553,15 +560,21 @@ export const GameSandbox: FC<GameProps> = ({
       localStorage.setItem('syncOrSinkName', username);
       setShowNameInput(false);
     }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
     setGameState('COUNTDOWN');
     gameStateRef.current = 'COUNTDOWN';
     setCountdown(3);
     let count = 3;
-    const timer = setInterval(() => {
+    countdownTimerRef.current = setInterval(() => {
       count--;
-      if (count > 0) setCountdown(count);
-      else {
-        clearInterval(timer);
+      if (count > 0) {
+        setCountdown(count);
+      } else {
+        clearInterval(countdownTimerRef.current!);
+        countdownTimerRef.current = null;
         setGameState('PLAYING');
         gameStateRef.current = 'PLAYING';
         initWorld();
