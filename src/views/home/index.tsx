@@ -67,6 +67,10 @@ import {
   type GameRefs,
 } from '../../../engine/state';
 import { renderGame } from '../../../engine/renderer';
+import {
+  updatePlayerPhysics,
+  handlePlayerLanding,
+} from '../../../engine/physics';
 
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
@@ -297,20 +301,26 @@ const GameSandbox: FC = () => {
       bgProps.current.forEach(p => p.y += (currentSpeed * 0.5 * p.speed) * deltaTime); bgProps.current = bgProps.current.filter(p => p.y < HEIGHT + 50);
 
       [pLeft.current, pRight.current].forEach((p) => {
-        if (!p.holding && p.vy < 0) p.vy *= Math.pow(0.85, deltaTime);
-        p.vy += GRAVITY * deltaTime; p.y += p.vy * deltaTime;
-        if (p.flash > 0) p.flash -= deltaTime; if (p.jumpBuffer > 0) p.jumpBuffer -= deltaTime * 16; 
-        
-        if (p.y > FLOOR - PLAYER_SIZE) {
-          if (!p.grounded) spawnDust(particles.current, p === pLeft.current ? MID/2 : MID + MID/2, FLOOR);
-          p.y = FLOOR - PLAYER_SIZE; p.vy = 0; p.grounded = true; p.jumps = 0;
-          if (p.jumpBuffer > 0) { p.vy = JUMP_FORCE; p.jumps++; p.grounded = false; p.jumpBuffer = 0; spawnExplosion(particles.current, p === pLeft.current ? 100 : 300, p.y + 20, '#fff', 5); }
-        } else {
-            p.grounded = false;
-            if (p.y > HEIGHT + 50) {
-               if (!GOD_MODE) { gameStateRef.current = 'GAMEOVER'; setGameState('GAMEOVER'); checkAchievements(scoreRef.current); pulse(400); if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } }
+        updatePlayerPhysics(p, deltaTime, FLOOR, HEIGHT, {
+          onLanding: () => {
+            if (!p.grounded) spawnDust(particles.current, p === pLeft.current ? MID/2 : MID + MID/2, FLOOR);
+          },
+          onBufferedJump: () => {
+            spawnExplosion(particles.current, p === pLeft.current ? 100 : 300, p.y + 20, '#fff', 5);
+          },
+          onFallOut: () => {
+            if (!GOD_MODE) {
+              gameStateRef.current = 'GAMEOVER';
+              setGameState('GAMEOVER');
+              checkAchievements(scoreRef.current);
+              pulse(400);
+              if (bgmRef.current) {
+                bgmRef.current.pause();
+                bgmRef.current.currentTime = 0;
+              }
             }
-        }
+          },
+        });
       });
 
       frameCount.current += deltaTime;
