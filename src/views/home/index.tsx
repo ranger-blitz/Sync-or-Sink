@@ -67,6 +67,7 @@ import {
   type GameRefs,
 } from '../../../engine/state';
 import { renderGame } from '../../../engine/renderer';
+import { startGameLoop, stopGameLoop } from '../../../engine/gameLoop';
 import {
   updatePlayerPhysics,
   handlePlayerLanding,
@@ -256,8 +257,12 @@ const GameSandbox: FC = () => {
           newBadges.push(ach.id); changed = true; } });
       if (changed) { setUnlockedBadges(newBadges); localStorage.setItem('syncOrSinkBadges', JSON.stringify(newBadges)); }
       if (finalScore > highScoreRef.current) { setHighScore(finalScore); highScoreRef.current = finalScore; localStorage.setItem('syncOrSinkHigh', finalScore.toString()); }
+  };
+
+  const recordRun = () => {
       const newRuns = (parseInt(localStorage.getItem('syncOrSinkRuns') || '0')) + 1;
-      localStorage.setItem('syncOrSinkRuns', newRuns.toString()); setTotalRuns(newRuns);
+      localStorage.setItem('syncOrSinkRuns', newRuns.toString());
+      setTotalRuns(newRuns);
   };
 
   const initWorld = () => {
@@ -459,7 +464,11 @@ const GameSandbox: FC = () => {
     requestRef.current = requestAnimationFrame(update);
   };
 
-  useEffect(() => { initWorld(); requestRef.current = requestAnimationFrame(update); return () => cancelAnimationFrame(requestRef.current!); }, []);
+  useEffect(() => {
+    initWorld();
+    const stop = startGameLoop(update);
+    return () => stopGameLoop(stop);
+  }, []);
 
   const doJump = (p: Player, xPos: number) => {
     doJumpPlayer(
