@@ -137,7 +137,6 @@ const GameSandbox: FC = () => {
   const highScoreRef = useRef(0);
   const distanceRef = useRef(0);
   const levelRef = useRef(0);
-  const requestRef = useRef<number>();
   const lastTimeRef = useRef<number>(0);
   const frameCount = useRef(0);
   const speedRef = useRef<number>(BASE_SPEED);
