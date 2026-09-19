@@ -71,6 +71,10 @@ import {
   updatePlayerPhysics,
   handlePlayerLanding,
 } from '../../../engine/physics';
+import {
+  checkCollision,
+  handleObstacleCollision,
+} from '../../../engine/collision';
 
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
@@ -347,71 +351,89 @@ const GameSandbox: FC = () => {
         obs.y += currentSpeed * deltaTime;
         const p = obs.lane === 'LEFT' ? pLeft.current : pRight.current;
         const pX = obs.lane === 'LEFT' ? (MID/2 - PLAYER_SIZE/2) : (MID + MID/2 - PLAYER_SIZE/2);
-        
-        let hitPadding = HITBOX_PADDING;
-        const pHitX = pX + hitPadding; const pHitY = p.y + hitPadding; const pHitW = PLAYER_SIZE - (hitPadding * 2); const pHitH = PLAYER_SIZE - (hitPadding * 2);
-        const obsHitX = obs.x + 2; const obsHitY = obs.y + 2; const obsHitW = obs.w - 4; const obsHitH = obs.h - 4;
         const isJumpingOver = !p.grounded && p.y < FLOOR - PLAYER_SIZE - 20;
 
-        if (pHitX < obsHitX + obsHitW && pHitX + pHitW > obsHitX && pHitY < obsHitY + obsHitH && pHitY + pHitH > obsHitY) {
-          if (obs.type === 'ORB') { 
-            if (!p.grounded) return; 
-            obs.collided = true;
-            shieldActive.current = true;
-            usedShieldRef.current = true;
-            shieldTimer.current = 300; 
-            spawnText(texts.current, pX, p.y - 40, "SHIELD UP!", '#00BFFF'); 
-            triggerEvent('level', pX, p.y, '#FFF'); 
-            pulse(50); 
-            return; 
-          }
-          if (obs.type === 'GHOST') { 
-            if (!p.grounded) return; 
-            obs.collided = true;
-            ghostActive.current = true; 
-            ghostTimer.current = 480; 
-            spawnText(texts.current, MID, 300, "👻 PHASE SHIFT!", '#d946ef'); 
-            triggerEvent('level', pX, p.y, '#d946ef'); 
-            pulse(50); 
-            return; 
-          }
-          if (obs.type === 'GLITCH') { 
-            if (!p.grounded) return; 
-            if (glitchActive.current) return; 
-            obs.collided = true;
-            glitchActive.current = true; 
-            glitchTimer.current = 360; 
-            spawnText(texts.current, MID, 300, "⚡ SURGE SPEED!", '#ff0000'); 
-            shakeRef.current = 20; 
-            triggerEvent('crash', pX, p.y, '#F00'); 
-            pulse(150); 
-            return; 
-          }
-          else if (!isJumpingOver) {
-            if (ghostActive.current) return; 
-            obs.collided = true;
-            if (shieldActive.current) { 
-              shieldActive.current = false; 
-              spawnExplosion(particles.current, pX, p.y, '#FFF', 20); 
-              spawnText(texts.current, MID, 300, "SHIELD SAVED YOU", '#FFF'); 
-              shakeRef.current = 10; 
-              triggerEvent('crash', pX, p.y, '#F00'); 
-              pulse(100); 
-            } 
-            else if (p.flash <= 0) { 
-              shakeRef.current = 30; 
-              spawnExplosion(particles.current, pX, p.y, activeEnv.accent, 30); 
-              triggerEvent('crash', pX, p.y, '#F00');
-              if (!GOD_MODE) { 
-                gameStateRef.current = 'GAMEOVER'; 
-                setGameState('GAMEOVER'); 
-                checkAchievements(scoreRef.current); 
-                pulse(400); 
-                if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.currentTime = 0; } 
+        const outcome = handleObstacleCollision({
+          player: p,
+          obstacle: obs,
+          playerX: pX,
+          playerY: p.y,
+          playerSize: PLAYER_SIZE,
+          hitboxPadding: HITBOX_PADDING,
+          ghostActive: ghostActive.current,
+          shieldActive: shieldActive.current,
+          glitchActive: glitchActive.current,
+          isJumpingOver,
+        });
+
+        if (outcome === 'NONE') {
+          if (!obs.passed && !obs.collided && obs.y > p.y + PLAYER_SIZE) obs.passed = true;
+          return;
+        }
+
+        if (outcome === 'ORB') {
+          if (!p.grounded) return;
+          obs.collided = true;
+          shieldActive.current = true;
+          usedShieldRef.current = true;
+          shieldTimer.current = 300;
+          spawnText(texts.current, pX, p.y - 40, 'SHIELD UP!', '#00BFFF');
+          triggerEvent('level', pX, p.y, '#FFF');
+          pulse(50);
+          return;
+        }
+
+        if (outcome === 'GHOST') {
+          if (!p.grounded) return;
+          obs.collided = true;
+          ghostActive.current = true;
+          ghostTimer.current = 480;
+          spawnText(texts.current, MID, 300, '👻 PHASE SHIFT!', '#d946ef');
+          triggerEvent('level', pX, p.y, '#d946ef');
+          pulse(50);
+          return;
+        }
+
+        if (outcome === 'GLITCH') {
+          if (!p.grounded) return;
+          if (glitchActive.current) return;
+          obs.collided = true;
+          glitchActive.current = true;
+          glitchTimer.current = 360;
+          spawnText(texts.current, MID, 300, '⚡ SURGE SPEED!', '#ff0000');
+          shakeRef.current = 20;
+          triggerEvent('crash', pX, p.y, '#F00');
+          pulse(150);
+          return;
+        }
+
+        if (outcome === 'BLOCK' && !isJumpingOver) {
+          if (ghostActive.current) return;
+          obs.collided = true;
+          if (shieldActive.current) {
+            shieldActive.current = false;
+            spawnExplosion(particles.current, pX, p.y, '#FFF', 20);
+            spawnText(texts.current, MID, 300, 'SHIELD SAVED YOU', '#FFF');
+            shakeRef.current = 10;
+            triggerEvent('crash', pX, p.y, '#F00');
+            pulse(100);
+          } else if (p.flash <= 0) {
+            shakeRef.current = 30;
+            spawnExplosion(particles.current, pX, p.y, activeEnv.accent, 30);
+            triggerEvent('crash', pX, p.y, '#F00');
+            if (!GOD_MODE) {
+              gameStateRef.current = 'GAMEOVER';
+              setGameState('GAMEOVER');
+              checkAchievements(scoreRef.current);
+              pulse(400);
+              if (bgmRef.current) {
+                bgmRef.current.pause();
+                bgmRef.current.currentTime = 0;
               }
             }
           }
         }
+
         if (!obs.passed && !obs.collided && obs.y > p.y + PLAYER_SIZE) obs.passed = true;
       });
       obstacles.current = obstacles.current.filter(o => o.y < HEIGHT + 50 && !o.collided);
