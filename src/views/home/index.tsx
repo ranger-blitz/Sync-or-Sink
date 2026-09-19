@@ -85,6 +85,7 @@ import {
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
   const [activeTab, setActiveTab] = useState('Play');
+  const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0);
 
   return (
     <div className="flex flex-col h-screen w-full bg-black justify-center items-center font-mono select-none text-white overflow-hidden">
@@ -99,10 +100,11 @@ export const HomeView: FC = ({ }) => {
                 gameId="sync-or-sink"
                 onGameOver={(result) => {
                   console.log(result);
+                  setLeaderboardRefreshKey((current) => current + 1);
                 }}
               />
             </div>
-            {activeTab === 'Rank' && <LeaderboardView />}
+            {activeTab === 'Rank' && <LeaderboardView key={leaderboardRefreshKey} />}
             {activeTab === 'Awards' && <AwardsView />}
             {activeTab === 'Shop' && <ShopView />}
         </div>

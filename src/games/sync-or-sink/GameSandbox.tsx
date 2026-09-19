@@ -1,5 +1,5 @@
 import { FC, useEffect, useState, useRef } from 'react';
-import type { GameProps } from '../types';
+import type { GameProps, GameResult } from '../types';
 import { GAME_CONFIG } from '../../../engine/constants';
 import type {
   Player,
@@ -90,6 +90,7 @@ export const GameSandbox: FC<GameProps> = ({
   const highScoreRef = useRef(0);
   const distanceRef = useRef(0);
   const levelRef = useRef(0);
+  const runStartedAtRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const frameCount = useRef(0);
   const speedRef = useRef<number>(BASE_SPEED);
@@ -178,6 +179,19 @@ export const GameSandbox: FC<GameProps> = ({
   };
 
   const trackRunEnd = () => {
+    const result: GameResult = {
+      gameId,
+      score: scoreRef.current,
+      duration: runStartedAtRef.current ? (Date.now() - runStartedAtRef.current) / 1000 : 0,
+      metadata: {
+        mode: gameModeRef.current,
+        shieldUsed: usedShieldRef.current,
+        zonesReached: levelRef.current,
+      },
+    };
+
+    onGameOver?.(result);
+
     checkAchievements({
       finalScore: scoreRef.current,
       unlockedBadges,
@@ -191,6 +205,7 @@ export const GameSandbox: FC<GameProps> = ({
     });
     recordRun();
     setTotalRuns(parseInt(localStorage.getItem('syncOrSinkRuns') || '0'));
+    runStartedAtRef.current = null;
   };
 
   const initWorld = () => {
@@ -552,6 +567,8 @@ export const GameSandbox: FC<GameProps> = ({
   };
 
   const handleStartGame = () => {
+    runStartedAtRef.current = Date.now();
+
     if (bgmRef.current && !isMuted) {
       playBgm(bgmRef.current, false);
       bgmRef.current.currentTime = 0;

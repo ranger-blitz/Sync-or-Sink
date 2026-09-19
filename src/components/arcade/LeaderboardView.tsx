@@ -18,7 +18,7 @@ export const LeaderboardView: FC = () => {
     if (localHigh) fakeScores.push({ username: localName, score: parseInt(localHigh) });
     fakeScores.sort((a, b) => b.score - a.score);
     setScores(fakeScores);
-  }, []);
+  }, [localStorage.getItem('syncOrSinkHigh')]);
 
   return (
     <div className="flex flex-col h-full bg-black p-6 overflow-y-auto">
