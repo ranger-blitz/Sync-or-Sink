@@ -56,6 +56,12 @@ import {
   spawnBlock,
   spawnSpecial,
 } from '../../../engine/spawning';
+import {
+  doJump as doJumpPlayer,
+  releaseJump as releaseJumpPlayer,
+  getPointerLane,
+  handleLinkedJump,
+} from '../../../engine/input';
 
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
@@ -486,10 +492,59 @@ const GameSandbox: FC = () => {
 
   useEffect(() => { initWorld(); requestRef.current = requestAnimationFrame(update); return () => cancelAnimationFrame(requestRef.current!); }, []);
 
-  const doJump = (p: Player, xPos: number) => { p.jumpBuffer = JUMP_BUFFER_TIME; p.holding = true; if (gameStateRef.current === 'PLAYING' && p.jumps < 2) { p.vy = JUMP_FORCE; p.jumps++; p.grounded = false; p.jumpBuffer = 0; spawnExplosion(particles.current, xPos, p.y + 20, '#fff', 5); triggerEvent('jump', xPos, p.y + 20, '#fff'); } };
-  const releaseJump = (p: Player) => { p.holding = false; };
-  const handlePointerDown = (e: any) => { if (gameStateRef.current !== 'PLAYING') return; if (gameModeRef.current === 'LINKED') { doJump(pLeft.current, 100); doJump(pRight.current, 300); } else { const rect = canvasRef.current?.getBoundingClientRect(); if (!rect) return; const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX }]; touches.forEach((t: any) => { if (t.clientX - rect.left < rect.width / 2) doJump(pLeft.current, 100); else doJump(pRight.current, 300); }); } };
-  const handlePointerUp = (e: any) => { if (gameModeRef.current === 'LINKED') { releaseJump(pLeft.current); releaseJump(pRight.current); } else { releaseJump(pLeft.current); releaseJump(pRight.current); } };
+  const doJump = (p: Player, xPos: number) => {
+    doJumpPlayer(
+      p,
+      xPos,
+      gameStateRef.current,
+      JUMP_FORCE,
+      JUMP_BUFFER_TIME,
+      2,
+      (x, y) => {
+        spawnExplosion(particles.current, x, y, '#fff', 5);
+        triggerEvent('jump', x, y, '#fff');
+      }
+    );
+  };
+  const releaseJump = (p: Player) => {
+    releaseJumpPlayer(p);
+  };
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (gameStateRef.current !== 'PLAYING') return;
+
+    if (gameModeRef.current === 'LINKED') {
+      handleLinkedJump(pLeft.current, pRight.current, 100, 300, {
+        gameState: gameStateRef.current,
+        jumpForce: JUMP_FORCE,
+        jumpBufferTime: JUMP_BUFFER_TIME,
+        maxJumps: 2,
+        onJump: (x, y) => {
+          spawnExplosion(particles.current, x, y, '#fff', 5);
+          triggerEvent('jump', x, y, '#fff');
+        },
+      });
+      return;
+    }
+
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const lane = getPointerLane(e.clientX, rect.left, rect.width);
+    if (lane === 'LEFT') {
+      doJump(pLeft.current, 100);
+    } else {
+      doJump(pRight.current, 300);
+    }
+  };
+  const handlePointerUp = (_e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (gameModeRef.current === 'LINKED') {
+      releaseJump(pLeft.current);
+      releaseJump(pRight.current);
+      return;
+    }
+
+    releaseJump(pLeft.current);
+    releaseJump(pRight.current);
+  };
   useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if (e.repeat) return; if (e.key === 'Escape' && gameStateRef.current === 'PLAYING') { gameStateRef.current = 'PAUSED'; setGameState('PAUSED'); if (bgmRef.current) bgmRef.current.pause(); return; } if (gameStateRef.current === 'PLAYING') { if (gameModeRef.current === 'LINKED') { if (e.code === 'Space' || e.key === 'ArrowUp') { doJump(pLeft.current, 100); doJump(pRight.current, 300); } } else { if (e.key === 'ArrowLeft' || e.key === 'a') doJump(pLeft.current, 100); if (e.key === 'ArrowRight' || e.key === 'd') doJump(pRight.current, 300); } } }; const handleKeyUp = (e: KeyboardEvent) => { if (gameModeRef.current === 'LINKED') { if (e.code === 'Space' || e.key === 'ArrowUp') { releaseJump(pLeft.current); releaseJump(pRight.current); } } else { if (e.key === 'ArrowLeft' || e.key === 'a') releaseJump(pLeft.current); if (e.key === 'ArrowRight' || e.key === 'd') releaseJump(pRight.current); } }; window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp); return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); }; }, []);
   const toggleMode = (e: React.MouseEvent) => { e.stopPropagation(); const newMode = gameMode === 'LINKED' ? 'DUAL' : 'LINKED'; setGameMode(newMode); gameModeRef.current = newMode; };
   const handleStartGame = () => { if (bgmRef.current && !isMuted) { playBgm(bgmRef.current, false); bgmRef.current.currentTime = 0; } if (showNameInput && username.trim().length > 0) { localStorage.setItem('syncOrSinkName', username); setShowNameInput(false); } setGameState('COUNTDOWN'); gameStateRef.current = 'COUNTDOWN'; setCountdown(3); let count = 3; const timer = setInterval(() => { count--; if (count > 0) setCountdown(count); else { clearInterval(timer); setGameState('PLAYING'); gameStateRef.current = 'PLAYING'; initWorld(); } }, 600); };
