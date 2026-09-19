@@ -1,7 +1,7 @@
 // --- GAME CONFIGURATION ---
 export const GAME_CONFIG = {
-  GOD_MODE: true,
-  SHOW_JUMP_LINE: true,
+  GOD_MODE: false,
+  SHOW_JUMP_LINE: false,
 
   GRAVITY: 0.8,
   JUMP_FORCE: -12.2,
