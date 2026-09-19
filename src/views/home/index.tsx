@@ -406,7 +406,6 @@ const GameSandbox: FC = () => {
       pRight,
     });
 
-    requestRef.current = requestAnimationFrame(update);
   };
 
   useEffect(() => {
