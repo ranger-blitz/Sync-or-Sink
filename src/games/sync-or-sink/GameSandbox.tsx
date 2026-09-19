@@ -143,12 +143,17 @@ export const GameSandbox: FC<GameProps> = ({
       }
     };
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) handlePauseTrigger();
-    });
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handlePauseTrigger();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handlePauseTrigger);
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handlePauseTrigger);
     };
   }, []);
