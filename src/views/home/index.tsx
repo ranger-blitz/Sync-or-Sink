@@ -62,6 +62,10 @@ import {
   getPointerLane,
   handleLinkedJump,
 } from '../../../engine/input';
+import {
+  resetPlayer,
+  type GameRefs,
+} from '../../../engine/state';
 
 // --- 1. THE APP SHELL (HomeView) ---
 export const HomeView: FC = ({ }) => {
@@ -194,8 +198,8 @@ const GameSandbox: FC = () => {
   const transitionProgress = useRef(1); 
   const prevEnvIdx = useRef(0); const nextEnvIdx = useRef(0);
   
-  const pLeft = useRef<Player>({ y: 450, vy: 0, grounded: true, color: ENVIRONMENTS[0].accent, jumps: 0, flash: 0, jumpBuffer: 0, holding: false });
-  const pRight = useRef<Player>({ y: 450, vy: 0, grounded: true, color: '#fff', jumps: 0, flash: 0, jumpBuffer: 0, holding: false });
+  const pLeft = useRef<Player>(resetPlayer(ENVIRONMENTS[0].accent));
+  const pRight = useRef<Player>(resetPlayer('#fff'));
   const obstacles = useRef<Obstacle[]>([]);
   const particles = useRef<Particle[]>([]);
   const texts = useRef<FloatingText[]>([]);
@@ -251,8 +255,8 @@ const GameSandbox: FC = () => {
     levelRef.current = 0; distanceRef.current = 0; scoreRef.current = 0; setScore(0);
     prevEnvIdx.current = 0; nextEnvIdx.current = 0; transitionProgress.current = 1; 
     setCurrentEnv(ENVIRONMENTS[0]); speedRef.current = BASE_SPEED;
-    pLeft.current = { y: 450, vy: 0, grounded: true, color: ENVIRONMENTS[0].accent, jumps: 0, flash: 0, jumpBuffer: 0, holding: false };
-    pRight.current = { y: 450, vy: 0, grounded: true, color: ENVIRONMENTS[0].accent, jumps: 0, flash: 0, jumpBuffer: 0, holding: false };
+    pLeft.current = resetPlayer(ENVIRONMENTS[0].accent);
+    pRight.current = resetPlayer(ENVIRONMENTS[0].accent);
     obstacles.current = []; particles.current = []; texts.current = []; bgProps.current = [];
     shieldActive.current = false; shieldTimer.current = 0;
     usedShieldRef.current = false;
@@ -266,7 +270,6 @@ const GameSandbox: FC = () => {
     const ctx = canvas.getContext('2d'); if (!ctx) return;
     if (!lastTimeRef.current) lastTimeRef.current = timestamp;
     const deltaTime = Math.min((timestamp - lastTimeRef.current) / 16, 2); lastTimeRef.current = timestamp;
-    const W = 400, H = 600, MID = 200, FLOOR = 500;
 
     if (gameStateRef.current === 'PLAYING') {
       const currentSpeed = speedRef.current * (glitchActive.current ? 1.5 : 1.0);
@@ -405,17 +408,17 @@ const GameSandbox: FC = () => {
 
     // --- RENDER ---
     ctx.save();
-    if (glitchActive.current) { ctx.fillStyle = `rgba(50, 0, 0, ${Math.random() * 0.3})`; ctx.fillRect(0, 0, W, H); } 
-    else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); }
+    if (glitchActive.current) { ctx.fillStyle = `rgba(50, 0, 0, ${Math.random() * 0.3})`; ctx.fillRect(0, 0, WIDTH, HEIGHT); } 
+    else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, WIDTH, HEIGHT); }
     
     if (shakeRef.current > 0) { ctx.translate((Math.random() - 0.5) * shakeRef.current, (Math.random() - 0.5) * shakeRef.current); shakeRef.current *= 0.9; }
 
-    const prevEnv = ENVIRONMENTS[prevEnvIdx.current]; const prevGrad = ctx.createLinearGradient(0, 0, 0, H); prevGrad.addColorStop(0, prevEnv.bgTop); prevGrad.addColorStop(1, prevEnv.bgBot);
-    ctx.fillStyle = prevGrad; ctx.fillRect(-1, -1, W + 2, H + 2); 
+    const prevEnv = ENVIRONMENTS[prevEnvIdx.current]; const prevGrad = ctx.createLinearGradient(0, 0, 0, HEIGHT); prevGrad.addColorStop(0, prevEnv.bgTop); prevGrad.addColorStop(1, prevEnv.bgBot);
+    ctx.fillStyle = prevGrad; ctx.fillRect(-1, -1, WIDTH + 2, HEIGHT + 2); 
     if (transitionProgress.current > 0) {
-        const nextEnv = ENVIRONMENTS[nextEnvIdx.current]; const nextGrad = ctx.createLinearGradient(0, 0, 0, H); nextGrad.addColorStop(0, nextEnv.bgTop); nextGrad.addColorStop(1, nextEnv.bgBot);
+        const nextEnv = ENVIRONMENTS[nextEnvIdx.current]; const nextGrad = ctx.createLinearGradient(0, 0, 0, HEIGHT); nextGrad.addColorStop(0, nextEnv.bgTop); nextGrad.addColorStop(1, nextEnv.bgBot);
         ctx.fillStyle = nextGrad;
-        if (transitionProgress.current < 1) { const splitY = Math.ceil(H * transitionProgress.current) + 2; ctx.fillRect(-1, -1, W + 2, splitY); } else ctx.fillRect(-1, -1, W + 2, H + 2);
+        if (transitionProgress.current < 1) { const splitY = Math.ceil(HEIGHT * transitionProgress.current) + 2; ctx.fillRect(-1, -1, WIDTH + 2, splitY); } else ctx.fillRect(-1, -1, WIDTH + 2, HEIGHT + 2);
     }
 
     bgProps.current.forEach(p => {
@@ -429,7 +432,7 @@ const GameSandbox: FC = () => {
     if (activeEnv.name === 'SURFACE') {
         const now = Date.now();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 2; ctx.beginPath();
-        for (let x = 0; x < W; x += 10) { const y = 50 + Math.sin((x + now/200) * 0.02) * 10; if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+        for (let x = 0; x < WIDTH; x += 10) { const y = 50 + Math.sin((x + now/200) * 0.02) * 10; if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
         ctx.stroke();
     }
 
@@ -471,7 +474,7 @@ const GameSandbox: FC = () => {
     // *** CHANGED: ANIME LINES (OPTIMIZED & VISIBLE) ***
     if (glitchActive.current) {
         ctx.save();
-        ctx.translate(W/2, H/2);
+        ctx.translate(WIDTH/2, HEIGHT/2);
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = Math.random() * 3 + 1; // Slight thickness flicker
         ctx.globalAlpha = Math.random() * 0.5 + 0.3; // Global opacity flicker
