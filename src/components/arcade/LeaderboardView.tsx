@@ -14,8 +14,12 @@ export const LeaderboardView: FC = () => {
 
     const localHigh = localStorage.getItem('syncOrSinkHigh');
     const localName = localStorage.getItem('syncOrSinkName') || 'YOU';
+    const parsedHigh = Number(localHigh);
 
-    if (localHigh) fakeScores.push({ username: localName, score: parseInt(localHigh) });
+    if (localHigh && Number.isFinite(parsedHigh) && parsedHigh >= 0) {
+      fakeScores.push({ username: localName, score: parsedHigh });
+    }
+
     fakeScores.sort((a, b) => b.score - a.score);
     setScores(fakeScores);
   }, [localStorage.getItem('syncOrSinkHigh')]);

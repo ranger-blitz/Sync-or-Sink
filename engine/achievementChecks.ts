@@ -13,6 +13,9 @@ export const checkAchievements = ({
   setUnlockedBadges: (next: string[]) => void;
   setHighScore: (next: number) => void;
 }) => {
+  const safeFinalScore = Number.isFinite(finalScore) ? finalScore : 0;
+  const safeCurrentHighScore = Number.isFinite(currentHighScore) ? currentHighScore : 0;
+
   const nextBadges = [...unlockedBadges];
   let changed = false;
 
@@ -22,7 +25,7 @@ export const checkAchievements = ({
   ];
 
   achievementData.forEach((achievement) => {
-    if (finalScore >= achievement.score && !nextBadges.includes(achievement.id)) {
+    if (safeFinalScore >= achievement.score && !nextBadges.includes(achievement.id)) {
       if (achievement.id === 'survivor' && usedShield) return;
       nextBadges.push(achievement.id);
       changed = true;
@@ -34,9 +37,9 @@ export const checkAchievements = ({
     localStorage.setItem('syncOrSinkBadges', JSON.stringify(nextBadges));
   }
 
-  if (finalScore > currentHighScore) {
-    setHighScore(finalScore);
-    localStorage.setItem('syncOrSinkHigh', finalScore.toString());
+  if (safeFinalScore > safeCurrentHighScore) {
+    setHighScore(safeFinalScore);
+    localStorage.setItem('syncOrSinkHigh', safeFinalScore.toString());
   }
 };
 
