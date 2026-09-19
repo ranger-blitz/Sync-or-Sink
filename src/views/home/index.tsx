@@ -68,6 +68,8 @@ import {
 } from '../../../engine/state';
 import { renderGame } from '../../../engine/renderer';
 import { startGameLoop, stopGameLoop } from '../../../engine/gameLoop';
+import { checkAchievements, recordRun } from '../../../engine/achievementChecks';
+import { SyncOrSink } from '../../games/sync-or-sink/SyncOrSink';
 import {
   updatePlayerPhysics,
   handlePlayerLanding,
@@ -89,7 +91,14 @@ export const HomeView: FC = ({ }) => {
           ))}
         </div>
         <div className="relative w-full max-w-[400px] h-full max-h-[800px] border-x-4 border-gray-900 bg-black shadow-2xl overflow-hidden rounded-3xl">
-            <div className={`${activeTab === 'Play' ? 'block' : 'hidden'} h-full`}><GameSandbox /></div>
+            <div className={`${activeTab === 'Play' ? 'block' : 'hidden'} h-full`}>
+              <SyncOrSink
+                gameId="sync-or-sink"
+                onGameOver={(result) => {
+                  console.log(result);
+                }}
+              />
+            </div>
             {activeTab === 'Rank' && <LeaderboardView />}
             {activeTab === 'Awards' && <AwardsView />}
             {activeTab === 'Shop' && <ShopView />}
@@ -250,19 +259,20 @@ const GameSandbox: FC = () => {
       playSound(audioCtx.current, key as AudioKey, isMutedRef.current);
       particles.current.push({ x: x, y: y, vx: 0, vy: 0, life: 1.0, color: color, size: 10, type: 'PULSE' });
   }
-  const checkAchievements = (finalScore: number) => {
-      const newBadges = [...unlockedBadges]; let changed = false;
-      SYNC_OR_SINK_ACHIEVEMENTS.forEach(ach => { if (finalScore >= ach.score && !newBadges.includes(ach.id)) 
-        {if (ach.id === 'survivor' && usedShieldRef.current)return; 
-          newBadges.push(ach.id); changed = true; } });
-      if (changed) { setUnlockedBadges(newBadges); localStorage.setItem('syncOrSinkBadges', JSON.stringify(newBadges)); }
-      if (finalScore > highScoreRef.current) { setHighScore(finalScore); highScoreRef.current = finalScore; localStorage.setItem('syncOrSinkHigh', finalScore.toString()); }
-  };
-
-  const recordRun = () => {
-      const newRuns = (parseInt(localStorage.getItem('syncOrSinkRuns') || '0')) + 1;
-      localStorage.setItem('syncOrSinkRuns', newRuns.toString());
-      setTotalRuns(newRuns);
+  const trackRunEnd = () => {
+      checkAchievements({
+        finalScore: scoreRef.current,
+        unlockedBadges,
+        usedShield: usedShieldRef.current,
+        currentHighScore: highScoreRef.current,
+        setUnlockedBadges,
+        setHighScore: (next: number) => {
+          setHighScore(next);
+          highScoreRef.current = next;
+        },
+      });
+      recordRun();
+      setTotalRuns(parseInt(localStorage.getItem('syncOrSinkRuns') || '0'));
   };
 
   const initWorld = () => {
