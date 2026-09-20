@@ -61,6 +61,15 @@ const {
   SPEED_MULTIPLIER,
 } = GAME_CONFIG;
 
+const readStoredBadges = (): string[] => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('syncOrSinkBadges') || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 export const GameSandbox: FC<GameProps> = ({
   gameId,
   onGameStart,
@@ -116,6 +125,8 @@ export const GameSandbox: FC<GameProps> = ({
   const particles = useRef<Particle[]>([]);
   const texts = useRef<FloatingText[]>([]);
   const bgProps = useRef<BgProp[]>([]);
+  const onGameOverRef = useRef(onGameOver);
+  onGameOverRef.current = onGameOver;
 
   useEffect(() => {
     const savedScore = localStorage.getItem('syncOrSinkHigh');
@@ -190,11 +201,11 @@ export const GameSandbox: FC<GameProps> = ({
       },
     };
 
-    onGameOver?.(result);
+    onGameOverRef.current?.(result);
 
     checkAchievements({
       finalScore: scoreRef.current,
-      unlockedBadges,
+      unlockedBadges: readStoredBadges(),
       usedShield: usedShieldRef.current,
       currentHighScore: highScoreRef.current,
       setUnlockedBadges,
