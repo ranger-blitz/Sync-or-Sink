@@ -643,6 +643,18 @@ export const GameSandbox: FC<GameProps> = ({
     if (bgmRef.current && !isMuted) bgmRef.current.play();
   };
 
+  const handleRestart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleStartGame();
+  };
+
+  const handleExit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    gameStateRef.current = 'GAMEOVER';
+    setGameState('GAMEOVER');
+    trackRunEnd();
+  };
+
   const handleShare = () => {
     const text = `I ascended to ${score}m in SyncOrSink! #SyncOrSink 🚀`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
@@ -687,7 +699,14 @@ export const GameSandbox: FC<GameProps> = ({
       {(gameState !== 'PLAYING') && (
         <div className="absolute inset-0 bg-black/85 flex flex-col justify-center items-center backdrop-blur-sm z-20 animate-fade-in p-4">
           {gameState === 'COUNTDOWN' && <div className="text-8xl font-black text-white animate-ping">{countdown}</div>}
-          {gameState === 'PAUSED' && <div className="flex flex-col gap-4 pointer-events-auto w-full max-w-[200px]"><h2 className="text-3xl font-bold italic mb-4 text-center">PAUSED</h2><button onClick={handleResume} className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200">RESUME</button><button onClick={handleHome} className="bg-gray-700 text-white px-8 py-3 rounded-full font-bold hover:bg-gray-600">QUIT</button></div>}
+          {gameState === 'PAUSED' && (
+            <div className="flex flex-col gap-3 pointer-events-auto w-full max-w-[200px]">
+              <h2 className="text-3xl font-bold italic mb-4 text-center">PAUSED</h2>
+              <button onClick={handleResume} className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200">RESUME</button>
+              <button onClick={handleRestart} className="bg-gray-800 text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-700">RESTART</button>
+              <button onClick={handleExit} className="bg-gray-700 text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-600">EXIT</button>
+            </div>
+          )}
           {gameState === 'TUTORIAL' && renderTutorial()}
           {showGuide && <div className="absolute inset-0 bg-black/95 flex flex-col justify-center items-center p-6 z-30 pointer-events-auto"><h2 className="text-xl font-bold text-cyan-400 mb-4 border-b border-cyan-400 pb-2">SYSTEM LOG</h2><div className="space-y-4 text-xs text-gray-300 w-full max-w-[280px]"><div className="flex items-start gap-3"><span className="text-xl">⚪</span><div><strong className="text-white block">SHIELD ORB</strong>Protects against one hit.</div></div><div className="flex items-start gap-3"><span className="text-xl">👻</span><div><strong className="text-purple-400 block">PHANTOM MODE</strong>8s Invincibility.</div></div><div className="flex items-start gap-3"><span className="text-xl">🔺</span><div><strong className="text-red-500 block">GLITCH TRAP</strong>Causes Turbo Speed. <span className="text-red-400">AVOID.</span></div></div></div><button onClick={() => setShowGuide(false)} className="mt-8 border border-white/20 px-6 py-2 rounded-full text-xs font-bold hover:bg-white/10">CLOSE LOG</button></div>}
           {gameState === 'GAMEOVER' && <div className="mb-8 text-center flex flex-col items-center w-full"><p className="text-blue-500 font-black text-3xl mb-2 animate-bounce">YOU SINKED 😂</p><div className="bg-white/10 p-4 rounded-xl mb-4 w-full max-w-[280px]"><p className="text-gray-400 text-xs tracking-widest">FINAL ASCENT</p><p className="text-4xl font-bold text-white mb-2">{score}m</p><div className="flex justify-between text-xs text-gray-500 border-t border-white/10 pt-2"><span>BEST: {highScore}m</span>{score >= highScore && <span className="text-yellow-400">NEW RECORD!</span>}</div></div><div className="flex gap-2 mb-6 flex-wrap justify-center max-w-[300px]">{SYNC_OR_SINK_ACHIEVEMENTS.map((a) => (<span key={a.id} className={`bg-gray-800/50 border ${unlockedBadges.includes(a.id) ? 'border-yellow-500 text-yellow-200' : 'border-gray-700 text-gray-500 opacity-50'} px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1`}>{a.icon} {a.name}</span>))}</div><div className="flex flex-col gap-3 w-full max-w-[280px] pointer-events-auto"><button onClick={handleStartGame} className="bg-white hover:bg-gray-200 text-black w-full py-4 rounded-full font-bold text-sm tracking-widest transition-all">TRY AGAIN</button><div className="flex gap-3"><button onClick={handleHome} className="bg-gray-800 hover:bg-gray-700 text-white flex-1 py-3 rounded-full font-bold text-xs tracking-widest transition-all">HOME</button><button onClick={handleShare} className="bg-blue-500 hover:bg-blue-400 text-white flex-1 py-3 rounded-full font-bold text-xs tracking-widest transition-all">SHARE</button></div></div></div>}
