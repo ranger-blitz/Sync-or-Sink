@@ -75,6 +75,7 @@ export const GameSandbox: FC<GameProps> = ({
   onGameStart,
   onScoreUpdate,
   onGameOver,
+  onOpenArcadeView,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<GameState>('START');
@@ -703,6 +704,12 @@ export const GameSandbox: FC<GameProps> = ({
             <div className="flex flex-col gap-3 pointer-events-auto w-full max-w-[200px]">
               <h2 className="text-3xl font-bold italic mb-4 text-center">PAUSED</h2>
               <button onClick={handleResume} className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200">RESUME</button>
+              {onOpenArcadeView && (
+                <>
+                  <button onClick={(e) => { e.stopPropagation(); onOpenArcadeView('Awards'); }} className="bg-gray-800 text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-700">ACHIEVEMENTS</button>
+                  <button onClick={(e) => { e.stopPropagation(); onOpenArcadeView('Shop'); }} className="bg-gray-800 text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-700">STORE</button>
+                </>
+              )}
               <button onClick={handleRestart} className="bg-gray-800 text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-700">RESTART</button>
               <button onClick={handleExit} className="bg-gray-700 text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-gray-600">EXIT</button>
             </div>
