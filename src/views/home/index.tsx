@@ -1,5 +1,8 @@
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { processRunResult } from '../../lib/rewards/runRewards';
+import type { ProcessedRun } from '../../lib/rewards/runRewards';
+import { RunRewardsBanner } from '../../components/arcade/RunRewardsBanner';
 import type { ArcadeView, GameResult } from '../../games/types';
 import { getGameById } from '../../games/registry';
 import { LeaderboardView } from '../../components/arcade/LeaderboardView';
@@ -14,12 +17,23 @@ export const HomeView: FC = () => {
   const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0);
   const [isGameActive, setIsGameActive] = useState(false);
   const [overlay, setOverlay] = useState<ArcadeView | null>(null);
+  const [runOutcome, setRunOutcome] = useState<ProcessedRun | null>(null);
+  const dismissRunOutcome = useCallback(() => setRunOutcome(null), []);
 
-  const handleGameOver = (_result: GameResult) => {
+  const handleGameOver = (result: GameResult) => {
     setIsGameActive(false);
     setActiveTab('Play');
     setOverlay(null);
-    setLeaderboardRefreshKey((current) => current + 1);
+    setRunOutcome(null);
+
+    // The arcade owns what a result means. The game only reported it.
+    void processRunResult(result).then((outcome) => {
+      if (outcome.rewards.xp > 0 || outcome.rewards.coins > 0) {
+        setRunOutcome(outcome);
+      }
+      // Refresh Rank only AFTER the score has actually been saved.
+      setLeaderboardRefreshKey((current) => current + 1);
+    });
   };
 
   return (
@@ -53,6 +67,7 @@ export const HomeView: FC = () => {
               gameId={selectedGame.id}
               onGameStart={() => {
                 setIsGameActive(true);
+                setRunOutcome(null);
               }}
               onGameOver={handleGameOver}
               onOpenArcadeView={(view) => setOverlay(view)}
@@ -71,6 +86,14 @@ export const HomeView: FC = () => {
           >
             {overlay === 'Awards' ? <AwardsView /> : <ShopView />}
           </ArcadeOverlay>
+        )}
+        {runOutcome && !isGameActive && activeTab === 'Play' && !overlay && (
+          <RunRewardsBanner
+            xp={runOutcome.rewards.xp}
+            coins={runOutcome.rewards.coins}
+            level={runOutcome.profile.level}
+            onDismiss={dismissRunOutcome}
+          />
         )}
       </div>
     </div>
