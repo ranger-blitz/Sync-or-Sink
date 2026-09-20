@@ -1,4 +1,10 @@
-import { GRAVITY, JUMP_FORCE, PLAYER_SIZE } from './constants';
+import { 
+  GRAVITY,
+  JUMP_FORCE,
+  PLAYER_SIZE,
+  MAX_FALL_SPEED,
+  JUMP_RELEASE_DAMPING, } from './constants';
+
 import type { Player } from './types';
 
 export type PhysicsCallbacks = {
@@ -42,10 +48,13 @@ export const updatePlayerPhysics = (
   roomHeight: number,
   callbacks: PhysicsCallbacks = {}
 ) => {
-  if (!player.holding && player.vy < 0) player.vy *= Math.pow(0.85, deltaTime);
+  if (!player.holding && player.vy < 0) {
+    player.vy *= Math.pow(JUMP_RELEASE_DAMPING, deltaTime);
+  }
 
   player.vy += GRAVITY * deltaTime;
-  player.y += player.vy * deltaTime;
+  if (player.vy > MAX_FALL_SPEED) player.vy = MAX_FALL_SPEED;
+  player.y += player.vy * deltaTime;;
 
   if (player.flash > 0) player.flash -= deltaTime;
   if (player.jumpBuffer > 0) player.jumpBuffer -= deltaTime * 16;
