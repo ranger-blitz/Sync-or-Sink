@@ -106,7 +106,6 @@ export const GameSandbox: FC<GameProps> = ({
   const shakeRef = useRef(0);
 
   const shieldActive = useRef(false);
-  const shieldTimer = useRef(0);
   const usedShieldRef = useRef(false);
   const ghostActive = useRef(false);
   const ghostTimer = useRef(0);
@@ -236,7 +235,6 @@ export const GameSandbox: FC<GameProps> = ({
     texts.current = [];
     bgProps.current = [];
     shieldActive.current = false;
-    shieldTimer.current = 0;
     usedShieldRef.current = false;
     ghostActive.current = false;
     ghostTimer.current = 0;
@@ -284,10 +282,6 @@ export const GameSandbox: FC<GameProps> = ({
         pulse(100);
       }
 
-      if (shieldActive.current) {
-        shieldTimer.current -= deltaTime;
-        if (shieldTimer.current <= 0) shieldActive.current = false;
-      }
       if (ghostActive.current) {
         ghostTimer.current -= deltaTime;
         const remaining = Math.ceil(ghostTimer.current / 60);
@@ -388,7 +382,6 @@ export const GameSandbox: FC<GameProps> = ({
           obs.collided = true;
           shieldActive.current = true;
           usedShieldRef.current = true;
-          shieldTimer.current = 300;
           spawnText(texts.current, pX, p.y - 40, 'SHIELD UP!', '#00BFFF');
           triggerEvent('level', pX, p.y, '#FFF');
           pulse(50);
