@@ -1,13 +1,15 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import type { ArcadeView, GameResult } from '../../games/types';
-import { SyncOrSink } from '../../games/sync-or-sink/SyncOrSink';
+import { getGameById } from '../../games/registry';
 import { LeaderboardView } from '../../components/arcade/LeaderboardView';
 import { AwardsView } from '../../components/arcade/AwardsView';
 import { ShopView } from '../../components/arcade/ShopView';
 import { ArcadeOverlay } from '../../components/arcade/ArcadeOverlay';
 
 export const HomeView: FC = () => {
+  const selectedGame = getGameById('sync-or-sink');
+  const GameComponent = selectedGame?.component;
   const [activeTab, setActiveTab] = useState('Play');
   const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0);
   const [isGameActive, setIsGameActive] = useState(false);
@@ -46,14 +48,16 @@ export const HomeView: FC = () => {
 
       <div className="relative w-full max-w-[400px] h-full max-h-[800px] border-x-4 border-gray-900 bg-black shadow-2xl overflow-hidden rounded-3xl">
         <div className={`${activeTab === 'Play' || isGameActive ? 'block' : 'hidden'} h-full`}>
-          <SyncOrSink
-            gameId="sync-or-sink"
-            onGameStart={() => {
-              setIsGameActive(true);
-            }}
-            onGameOver={handleGameOver}
-            onOpenArcadeView={(view) => setOverlay(view)}
-          />
+          {GameComponent && selectedGame && (
+            <GameComponent
+              gameId={selectedGame.id}
+              onGameStart={() => {
+                setIsGameActive(true);
+              }}
+              onGameOver={handleGameOver}
+              onOpenArcadeView={(view) => setOverlay(view)}
+            />
+          )}
         </div>
 
         {!isGameActive && activeTab === 'Rank' && <LeaderboardView key={leaderboardRefreshKey} />}
