@@ -16,13 +16,13 @@
     "@tailwindcss/typography": "^0.5.9",
     "next": "^13.1.5",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "zustand": "^3.6.9"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
-    "@types/react-dom": "^18.0.27",
+    "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.2",
     "daisyui": "^2.24.3",
     "eslint": "8.7.0",
