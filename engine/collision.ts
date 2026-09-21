@@ -71,7 +71,7 @@ export const handleObstacleCollision = ({
   if (obstacle.type === 'GHOST') return 'GHOST';
   if (obstacle.type === 'GLITCH') return 'GLITCH';
 
-  if (ghostActive || glitchActive || isJumpingOver) {
+  if (ghostActive || isJumpingOver) {
     return 'NONE';
   }
 

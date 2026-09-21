@@ -59,6 +59,7 @@ const {
   FLOOR,
   MID,
   SPEED_MULTIPLIER,
+  GLITCH_SPEED_MULTIPLIER,
 } = GAME_CONFIG;
 
 const readStoredBadges = (): string[] => {
@@ -255,7 +256,9 @@ export const GameSandbox: FC<GameProps> = ({
     lastTimeRef.current = timestamp;
 
     if (gameStateRef.current === 'PLAYING') {
-      const currentSpeed = speedRef.current * (glitchActive.current ? 1.5 : 1.0);
+      const currentSpeed =
+        speedRef.current * (glitchActive.current ? 
+          GLITCH_SPEED_MULTIPLIER : 1.0);
       distanceRef.current += (currentSpeed * deltaTime) * PIXELS_TO_METERS;
       const currentAltitude = Math.floor(distanceRef.current);
       if (currentAltitude > scoreRef.current) {
@@ -311,8 +314,11 @@ export const GameSandbox: FC<GameProps> = ({
       });
       bgProps.current = bgProps.current.filter((p) => p.y < HEIGHT + 50);
 
+      const playerDelta =
+        deltaTime * (glitchActive.current ? GLITCH_SPEED_MULTIPLIER : 1);
+
       [pLeft.current, pRight.current].forEach((p) => {
-        updatePlayerPhysics(p, deltaTime, FLOOR, HEIGHT, {
+        updatePlayerPhysics(p, playerDelta, FLOOR, HEIGHT, {
           onLanding: () => {
             if (!p.grounded) spawnDust(particles.current, p === pLeft.current ? MID / 2 : MID + MID / 2, FLOOR);
           },
@@ -334,7 +340,7 @@ export const GameSandbox: FC<GameProps> = ({
         });
       });
 
-      frameCount.current += deltaTime;
+      frameCount.current += deltaTime * (glitchActive.current ? GLITCH_SPEED_MULTIPLIER : 1);
       const currentSpawnRate = Math.max(30, SPAWN_RATE_BASE - levelRef.current * 5);
       if (frameCount.current > currentSpawnRate) {
         const rand = Math.random();
