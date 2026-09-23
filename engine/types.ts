@@ -3,6 +3,7 @@
 export type GameMode = "LINKED" | "DUAL";
 
 export type GameState =
+  | "NAME_ENTRY"
   | "START"
   | "COUNTDOWN"
   | "TUTORIAL"
