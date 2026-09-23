@@ -47,9 +47,21 @@ export const spawnText = (
   text: string,
   color: string
 ) => {
+  const ROW_HEIGHT = 26;
+  
+  let targetY = y;
+  const overlapsExisting = () =>
+    texts.some(
+      (t) => t.life > 0 && Math.abs(t.x - x) < 140 && Math.abs(t.y - targetY) < ROW_HEIGHT
+    );
+
+  while (overlapsExisting()) {
+    targetY += ROW_HEIGHT;
+  }
+
   texts.push({
     x,
-    y,
+    y: targetY,
     text,
     life: 1.0,
     color,
