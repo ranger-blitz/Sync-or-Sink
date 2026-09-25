@@ -175,8 +175,14 @@ export const GameSandbox: FC<GameProps> = ({
 
   useEffect(() => {
     isMutedRef.current = isMuted;
+
+    if (isMuted) {
+      bgmRef.current?.pause();
+      return;
+    }
+
     if (gameState === 'PLAYING') {
-      playBgm(bgmRef.current, isMuted);
+      playBgm(bgmRef.current, false);
     } else {
       stopBgm(bgmRef.current, gameState === 'GAMEOVER');
     }
