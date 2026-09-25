@@ -388,6 +388,19 @@ export const GameSandbox: FC<GameProps> = ({
 
         if (outcome === 'NONE') {
           if (!obs.passed && !obs.collided && obs.y > p.y + PLAYER_SIZE) obs.passed = true;
+
+          // A jump that genuinely cleared a block by only a hair -- not
+          // every jump over every block, only the close ones.
+          if (
+            isJumpingOver &&
+            obs.type === 'BLOCK' &&
+            !obs.closeCallShown &&
+            Math.abs(p.y + PLAYER_SIZE - obs.y) < 14
+          ) {
+            obs.closeCallShown = true;
+            spawnText(texts.current, pX, p.y - 20, 'CLOSE CALL!', '#facc15');
+          }
+
           return;
         }
 

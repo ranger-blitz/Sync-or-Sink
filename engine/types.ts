@@ -39,6 +39,7 @@ export type Obstacle = {
   lane: Lane;
   passed: boolean;
   collided: boolean;
+  closeCallShown: boolean;
 };
 
 export type ParticleType =
