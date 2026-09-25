@@ -2,6 +2,7 @@ import type { GameResult } from '../../games/types';
 import type { PlayerProfile } from '../profiles/types';
 import { getLocalProfile, saveLocalProfile } from '../profiles/localProfile';
 import { scoreRepository } from '../scores/scoreRepository';
+import { getLevelFromXp } from '../profiles/progression';
 
 export type RunReward = {
   xp: number;
@@ -36,9 +37,12 @@ export const processRunResult = async (result: GameResult): Promise<ProcessedRun
 
   const rewards = calculateRunRewards(result);
 
+  const newXp = profile.xp + rewards.xp;
+
   const updatedProfile: PlayerProfile = {
     ...profile,
-    xp: profile.xp + rewards.xp,
+    xp: newXp,
+    level: getLevelFromXp(newXp),
     coins: profile.coins + rewards.coins,
     gamesPlayed: profile.gamesPlayed + 1,
     totalScore: profile.totalScore + result.score,

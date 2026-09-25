@@ -91,7 +91,6 @@ export const GameSandbox: FC<GameProps> = ({
   const isMutedRef = useRef(false);
   const [showGuide, setShowGuide] = useState(false);
   const [username, setUsername] = useState('');
-  const [showNameInput, setShowNameInput] = useState(true);
   const [totalRuns, setTotalRuns] = useState(0);
   const [tutorialStep, setTutorialStep] = useState(0);
 
@@ -140,7 +139,9 @@ export const GameSandbox: FC<GameProps> = ({
     const savedName = localStorage.getItem('syncOrSinkName');
     if (savedName) {
       setUsername(savedName);
-      setShowNameInput(false);
+    } else {
+      setGameState('NAME_ENTRY');
+      gameStateRef.current = 'NAME_ENTRY';
     }
     const savedBadges = localStorage.getItem('syncOrSinkBadges');
     if (savedBadges) setUnlockedBadges(JSON.parse(savedBadges));
@@ -577,16 +578,21 @@ export const GameSandbox: FC<GameProps> = ({
     gameModeRef.current = newMode;
   };
 
+  const handleNameSubmit = () => {
+    const trimmed = username.trim();
+    if (trimmed.length === 0) return; // compulsory: nothing happens on an empty name
+    localStorage.setItem('syncOrSinkName', trimmed);
+    setUsername(trimmed);
+    setGameState('START');
+    gameStateRef.current = 'START';
+  };
+
   const handleStartGame = () => {
     runStartedAtRef.current = Date.now();
 
     if (bgmRef.current && !isMuted) {
       playBgm(bgmRef.current, false);
       bgmRef.current.currentTime = 0;
-    }
-    if (showNameInput && username.trim().length > 0) {
-      localStorage.setItem('syncOrSinkName', username);
-      setShowNameInput(false);
     }
     if (countdownTimerRef.current) {
       clearInterval(countdownTimerRef.current);
@@ -730,7 +736,38 @@ export const GameSandbox: FC<GameProps> = ({
             </div>
           )}
           <div className="flex gap-3"><button onClick={handleHome} className="bg-gray-800 hover:bg-gray-700 text-white flex-1 py-3 rounded-full font-bold text-xs tracking-widest transition-all">HOME</button><button onClick={handleShare} className="bg-blue-500 hover:bg-blue-400 text-white flex-1 py-3 rounded-full font-bold text-xs tracking-widest transition-all">SHARE</button></div></div></div>}
-          {gameState === 'START' && <><h1 className="text-5xl font-black italic tracking-tighter mb-2 text-center"><span className="text-cyan-400">SYNC</span><span className="text-white mx-2">OR</span><span className="text-blue-600">SINK</span></h1>{showNameInput && (<div className="mb-4"><input type="text" placeholder="ENTER PILOT NAME" className="bg-white/10 border border-white/20 rounded px-4 py-2 text-center text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 uppercase font-bold text-sm tracking-widest" maxLength={12} value={username} onChange={(e) => setUsername(e.target.value.toUpperCase())} /></div>)}<div className="flex gap-4 mb-8 mt-4 pointer-events-auto"><button onClick={toggleMode} className={`px-4 py-2 rounded border text-xs font-bold transition-all ${gameMode === 'LINKED' ? 'bg-white text-black border-white' : 'text-gray-500 border-gray-700'}`}>LINKED</button><button onClick={toggleMode} className={`px-4 py-2 rounded border text-xs font-bold transition-all ${gameMode === 'DUAL' ? 'bg-white text-black border-white' : 'text-gray-500 border-gray-700'}`}>DUAL</button></div><button onClick={initiateDive} className="pointer-events-auto border border-white/20 bg-white/5 px-12 py-5 rounded-full hover:bg-white/10 transition-colors active:scale-95 shadow-lg shadow-cyan-500/20"><span className="font-bold text-white tracking-widest text-lg">INITIATE DIVE</span></button><button onClick={() => setShowGuide(true)} className="mt-6 text-xs text-gray-500 hover:text-white underline tracking-widest pointer-events-auto">SYSTEM INFO</button></>}
+          {gameState === 'NAME_ENTRY' && (
+            <div className="flex flex-col items-center pointer-events-auto w-full max-w-[280px]">
+              <h1 className="text-3xl font-black italic tracking-tighter mb-1 text-center">
+                <span className="text-cyan-400">SYNC</span>
+                <span className="text-white mx-2">OR</span>
+                <span className="text-blue-600">SINK</span>
+              </h1>
+              <p className="text-xs text-gray-500 mb-6 tracking-widest text-center">
+                ENTER YOUR PILOT NAME TO CONTINUE
+              </p>
+              <input
+                type="text"
+                placeholder="PILOT NAME"
+                autoFocus
+                className="bg-white/10 border border-white/20 rounded px-4 py-3 text-center text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 uppercase font-bold text-sm tracking-widest w-full mb-4"
+                maxLength={12}
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleNameSubmit();
+                }}
+              />
+              <button
+                onClick={handleNameSubmit}
+                disabled={username.trim().length === 0}
+                className="bg-white text-black w-full py-3 rounded-full font-bold text-sm tracking-widest transition-all hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                CONTINUE
+              </button>
+            </div>
+          )}
+          {gameState === 'START' && <><h1 className="text-5xl font-black italic tracking-tighter mb-2 text-center"><span className="text-cyan-400">SYNC</span><span className="text-white mx-2">OR</span><span className="text-blue-600">SINK</span></h1><div className="flex gap-4 mb-8 mt-4 pointer-events-auto"><button onClick={toggleMode} className={`px-4 py-2 rounded border text-xs font-bold transition-all ${gameMode === 'LINKED' ? 'bg-white text-black border-white' : 'text-gray-500 border-gray-700'}`}>LINKED</button><button onClick={toggleMode} className={`px-4 py-2 rounded border text-xs font-bold transition-all ${gameMode === 'DUAL' ? 'bg-white text-black border-white' : 'text-gray-500 border-gray-700'}`}>DUAL</button></div><button onClick={initiateDive} className="pointer-events-auto border border-white/20 bg-white/5 px-12 py-5 rounded-full hover:bg-white/10 transition-colors active:scale-95 shadow-lg shadow-cyan-500/20"><span className="font-bold text-white tracking-widest text-lg">INITIATE DIVE</span></button><button onClick={() => setShowGuide(true)} className="mt-6 text-xs text-gray-500 hover:text-white underline tracking-widest pointer-events-auto">SYSTEM INFO</button></>}
         </div>
       )}
     </>

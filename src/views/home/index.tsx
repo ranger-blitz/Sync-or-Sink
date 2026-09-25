@@ -9,6 +9,7 @@ import { LeaderboardView } from '../../components/arcade/LeaderboardView';
 import { AwardsView } from '../../components/arcade/AwardsView';
 import { ShopView } from '../../components/arcade/ShopView';
 import { ArcadeOverlay } from '../../components/arcade/ArcadeOverlay';
+import { ProfileView } from '../../components/arcade/ProfileView';
 
 export const HomeView: FC = () => {
   const selectedGame = getGameById('sync-or-sink');
@@ -40,7 +41,7 @@ export const HomeView: FC = () => {
     <div className="flex flex-col h-screen w-full bg-black justify-center items-center font-mono select-none text-white overflow-hidden">
       {!isGameActive && (
         <div className="flex items-center gap-2 rounded-full bg-white/5 px-2 py-1 mb-4 z-50 border border-white/10">
-          {['Play', 'Rank', 'Awards', 'Shop'].map((tab) => (
+          {['Play', 'Rank', 'Awards', 'Shop', 'Profile'].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -78,7 +79,10 @@ export const HomeView: FC = () => {
         {!isGameActive && activeTab === 'Rank' && <LeaderboardView key={leaderboardRefreshKey} />}
         {!isGameActive && activeTab === 'Awards' && <AwardsView />}
         {!isGameActive && activeTab === 'Shop' && <ShopView />}
-
+        {!isGameActive && activeTab === 'Profile' && (
+          <ProfileView onViewAchievements={() => setActiveTab('Awards')} />
+        )}
+        
         {overlay && (
           <ArcadeOverlay
             title={overlay === 'Awards' ? 'Achievements' : 'Store'}
