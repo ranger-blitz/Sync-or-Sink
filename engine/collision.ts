@@ -20,10 +20,10 @@ export const checkCollision = (
   const pHitW = playerSize - hitboxPadding * 2;
   const pHitH = playerSize - hitboxPadding * 2;
 
-  const obsHitX = obstacle.x + 2;
-  const obsHitY = obstacle.y + 2;
-  const obsHitW = obstacle.w - 4;
-  const obsHitH = obstacle.h - 4;
+  const obsHitX = obstacle.x + 4;
+  const obsHitY = obstacle.y + 6;
+  const obsHitW = obstacle.w - 8;
+  const obsHitH = obstacle.h - 12;
 
   return (
     pHitX < obsHitX + obsHitW &&

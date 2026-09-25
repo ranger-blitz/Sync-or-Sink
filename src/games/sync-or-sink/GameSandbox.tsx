@@ -175,8 +175,14 @@ export const GameSandbox: FC<GameProps> = ({
 
   useEffect(() => {
     isMutedRef.current = isMuted;
+
+    if (isMuted) {
+      bgmRef.current?.pause();
+      return;
+    }
+
     if (gameState === 'PLAYING') {
-      playBgm(bgmRef.current, isMuted);
+      playBgm(bgmRef.current, false);
     } else {
       stopBgm(bgmRef.current, gameState === 'GAMEOVER');
     }
@@ -382,6 +388,19 @@ export const GameSandbox: FC<GameProps> = ({
 
         if (outcome === 'NONE') {
           if (!obs.passed && !obs.collided && obs.y > p.y + PLAYER_SIZE) obs.passed = true;
+
+          // A jump that genuinely cleared a block by only a hair -- not
+          // every jump over every block, only the close ones.
+          if (
+            isJumpingOver &&
+            obs.type === 'BLOCK' &&
+            !obs.closeCallShown &&
+            Math.abs(p.y + PLAYER_SIZE - obs.y) < 14
+          ) {
+            obs.closeCallShown = true;
+            spawnText(texts.current, pX, p.y - 20, 'CLOSE CALL!', '#facc15');
+          }
+
           return;
         }
 
@@ -600,6 +619,7 @@ export const GameSandbox: FC<GameProps> = ({
     }
     setGameState('COUNTDOWN');
     gameStateRef.current = 'COUNTDOWN';
+    onGameStart?.();
     setCountdown(3);
     let count = 3;
     countdownTimerRef.current = setInterval(() => {
@@ -611,7 +631,6 @@ export const GameSandbox: FC<GameProps> = ({
         countdownTimerRef.current = null;
         setGameState('PLAYING');
         gameStateRef.current = 'PLAYING';
-        onGameStart?.();
         initWorld();
       }
     }, 600);
