@@ -606,6 +606,7 @@ export const GameSandbox: FC<GameProps> = ({
     }
     setGameState('COUNTDOWN');
     gameStateRef.current = 'COUNTDOWN';
+    onGameStart?.();
     setCountdown(3);
     let count = 3;
     countdownTimerRef.current = setInterval(() => {
@@ -617,7 +618,6 @@ export const GameSandbox: FC<GameProps> = ({
         countdownTimerRef.current = null;
         setGameState('PLAYING');
         gameStateRef.current = 'PLAYING';
-        onGameStart?.();
         initWorld();
       }
     }, 600);
