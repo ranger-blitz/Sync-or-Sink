@@ -42,7 +42,7 @@ import { checkAchievements, recordRun } from '../../../engine/achievementChecks'
 import {
   updatePlayerPhysics,
 } from '../../../engine/physics';
-import { handleObstacleCollision } from '../../../engine/collision';
+import { handleObstacleCollision, checkCollision } from '../../../engine/collision';
 
 const {
   GOD_MODE,
@@ -388,19 +388,6 @@ export const GameSandbox: FC<GameProps> = ({
 
         if (outcome === 'NONE') {
           if (!obs.passed && !obs.collided && obs.y > p.y + PLAYER_SIZE) obs.passed = true;
-
-          // A jump that genuinely cleared a block by only a hair -- not
-          // every jump over every block, only the close ones.
-          if (
-            isJumpingOver &&
-            obs.type === 'BLOCK' &&
-            !obs.closeCallShown &&
-            Math.abs(p.y + PLAYER_SIZE - obs.y) < 14
-          ) {
-            obs.closeCallShown = true;
-            spawnText(texts.current, pX, p.y - 20, 'CLOSE CALL!', '#facc15');
-          }
-
           return;
         }
 
@@ -512,6 +499,29 @@ export const GameSandbox: FC<GameProps> = ({
       (x, y) => {
         spawnExplosion(particles.current, x, y, '#fff', 5);
         triggerEvent('jump', x, y, '#fff');
+
+        // Close call = jumped late against the nearest oncoming block in
+        // this lane, checked once at the moment of the jump -- not every
+        // frame, and not by box overlap (every successful jump overlaps
+        // vertically at some point in a single-lane faller like this).
+        const lane: 'LEFT' | 'RIGHT' = p === pLeft.current ? 'LEFT' : 'RIGHT';
+        const CLOSE_CALL_GAP = 26;
+
+        let nearestGap = Infinity;
+        let nearestObs: (typeof obstacles.current)[number] | null = null;
+        obstacles.current.forEach((o) => {
+          if (o.lane !== lane || o.type !== 'BLOCK' || o.passed || o.collided || o.closeCallShown) return;
+          const gap = p.y - (o.y + o.h);
+          if (gap >= 0 && gap < nearestGap) {
+            nearestGap = gap;
+            nearestObs = o;
+          }
+        });
+
+        if (nearestObs && nearestGap < CLOSE_CALL_GAP) {
+          nearestObs.closeCallShown = true;
+          spawnText(texts.current, x, p.y - 20, 'CLOSE CALL!', '#facc15');
+        }
       }
     );
   };
